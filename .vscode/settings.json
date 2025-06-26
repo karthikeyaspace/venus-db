@@ -17,18 +17,6 @@
     "emmet.useInlineCompletions": true,
     "terminal.integrated.enableMultiLinePasteWarning": "never",
     "debug.disassemblyView.showSourceCode": false,
-    "[html]": {
-        "editor.defaultFormatter": "vscode.html-language-features"
-    },
-    "[javascript]": {
-        "editor.defaultFormatter": "vscode.typescript-language-features"
-    },
-    "[css]": {
-        "editor.defaultFormatter": "vscode.css-language-features"
-    },
-    "[json]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
-    },
     "git.openRepositoryInParentFolders": "never",
     "editor.minimap.size": "fit",
     "editor.minimap.showSlider": "always",
@@ -49,11 +37,12 @@
     "diffEditor.ignoreTrimWhitespace": false,
     "vsicons.dontShowNewVersionMessage": true,
     "editor.tabSize": 2,
-    "prettier.tabWidth": 4,
     "github.copilot.nextEditSuggestions.enabled": true,
     "editor.stickyScroll.maxLineCount": 3,
     "workbench.editor.empty.hint": "hidden",
     "files.autoSave": "afterDelay",
+    "C_Cpp.clang_format_style": "{BasedOnStyle: Google, IndentWidth: 4, IndentCaseLabels: false, TabWidth: 4, UseTab: ForIndentation, ColumnLimit: 0}",
+    "C_Cpp.clang_format_fallbackStyle": "LLVM",
     "C_Cpp.default.compilerPath": "/bin/g++",
     "files.associations": {
         "iostream": "cpp",

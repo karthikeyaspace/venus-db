@@ -7,7 +7,7 @@ This is inspired by 2 people: 1. Sir Arpit Bhayani, 2. Prof. Andy Pavlo
 ## Some ground work:
 - C++, WSL implementation - why, i dont know!
 - SQL case sensitive - all caps
-- Decomposition Storage Model - Column storage
+- N-ary Storage Model - Row storage
 - Only 1 primary key - for index, no foreign keys
 - Single/simple joins
 - Make a simple parser only for supporting commands - extensible
