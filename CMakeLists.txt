@@ -12,17 +12,20 @@ set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 set(PROJECT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 include_directories(
-    ${PROJECT_SOURCE_DIR}/catalog
-    ${PROJECT_SOURCE_DIR}/common
-    ${PROJECT_SOURCE_DIR}/executor
+    # ${PROJECT_SOURCE_DIR}/catalog
+    # ${PROJECT_SOURCE_DIR}/common
+    # ${PROJECT_SOURCE_DIR}/executor
     ${PROJECT_SOURCE_DIR}/storage
-    ${PROJECT_SOURCE_DIR}/index
-    ${PROJECT_SOURCE_DIR}/buffer
-    ${PROJECT_SOURCE_DIR}/parser
+    # ${PROJECT_SOURCE_DIR}/index
+    # ${PROJECT_SOURCE_DIR}/buffer
+    # ${PROJECT_SOURCE_DIR}/parser
     # ${PROJECT_SOURCE_DIR}/planner
 )
 
-file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/*.cpp")
+file(GLOB_RECURSE SOURCES 
+    "${PROJECT_SOURCE_DIR}/*.cpp"
+    "${PROJECT_SOURCE_DIR}/storage/*.cpp"
+)
 
 add_executable(minidb
     ${SOURCES}

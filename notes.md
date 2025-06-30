@@ -28,7 +28,7 @@ This is inspired by 2 people: 1. Sir Arpit Bhayani, 2. Prof. Andy Pavlo
 ## Components
 - Parser, Query Executor, Query Optimizer(Heuristic) - Interpreter
 - API 
-- Index manager - Access methods(B+ Tree)
+- Index manager - Access methods(B+ Tree) - Clustered only
 - Buffer manager - Disk scheduling, LRU-K
 - Storage manager - File system, data structures
 
@@ -37,15 +37,25 @@ This is inspired by 2 people: 1. Sir Arpit Bhayani, 2. Prof. Andy Pavlo
 
 
 ## Page layout
-+--------------------+  ← offset 0
-| Page Header        |  (e.g., 32B)
++--------------------+  ← offset 0
+| Page Header        |  (e.g., 32B)
 +--------------------+
-| Slot Directory     |  (grows downward)
+| Slot Directory     |  (grows downward from header end)
 +--------------------+
-| Free Space         |
+| Free Space         |
 +--------------------+
-| Tuples / Records   |  (grows upward)
-+--------------------+  ← offset 4096
+| Tuples / Records   |  (grows upward from page end)
++--------------------+  ← offset 4096 (PAGE_SIZE)
+
+
+Record ID (page_id, slot_id)
+          ↓
++────────────────────+
+│  Tuple Header      │  (e.g., Null Bitmap, Size of Tuple)
++────────────────────+
+│  Tuple Body        │  (Column Values)
++────────────────────+
+
 
 Header - page id, page type, num slots, free space ptr, dirty bit
 Disk -> DB File -> Page -> Tuple
