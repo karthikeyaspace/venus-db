@@ -17,7 +17,26 @@
  * WritePage    - overwrite (or extend) an existing page
  * ReadPage     - load a page’s contents (scan)
  * AllocatePage - assign a fresh page ID (create a new page) into .db file
- * DeallocatePage - retire a page ID (delete page from disk)     ''
+ * DeallocatePage - mark a page as free (generally removing entire page from disk is done using a background thread)
+ *
+ * Memory refresher
+ * - Memory is a sequence of bytes, each byte has an address.
+ * - A page is a fixed-size block of memory, typically 4KB or 8KB.
+ * - To read a page, seek to that memory pointer where page starts and read PAGE_SIZE bytes
+ *
+ * - Physical vs Logical Representation
+ *   * In‐memory structs may have padding/alignment; on‐disk layouts must be packed and byte‐order safe.
+ *   * Always define explicit on‐disk headers (e.g., fixed‐size page header) and serialize/deserialize fields.
+ *
+ * - Pages and Page IDs
+ *   * Logical page_id_t in BufferPool → index into frame table.
+ *   * Disk offset calculation: offset = page_id * PAGE_SIZE.
+ *   * To fetch: fstream.seekg(offset), read PAGE_SIZE bytes into buffer.
+ *   * To write: populate in‐memory buffer, fstream.seekp(offset), write PAGE_SIZE.
+ *
+ * - Handling Byte Data
+ *   * Use std::memcpy or manual bit‐shifts to pack/unpack fields.
+ *   * For strings or variable data, store length prefix, then raw bytes.
  */
 
 #pragma once
@@ -34,8 +53,8 @@ namespace storage {
 		explicit DiskManager(const std::string& db_file);
 		~DiskManager();
 
-		void WritePage(page_id_t page_id, const char* page_data);
 		void ReadPage(page_id_t page_id, char* page_data);
+		void WritePage(page_id_t page_id, const char* page_data);
 		page_id_t AllocatePage();
 		void DeallocatePage(page_id_t page_id);
 		uint32_t GetNumberOfPages() const;

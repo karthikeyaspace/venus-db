@@ -14,7 +14,7 @@ constexpr uint8_t LRUK_REPLACER_K = 5;
 constexpr uint32_t MAX_DATABASES = 2;
 constexpr uint32_t MAX_TABLES = 64; // per db
 constexpr uint32_t MAX_COLUMNS = 64; // per table
-constexpr uint32_t CHAR_LENGTH = 127; 
+constexpr uint32_t CHAR_LENGTH = 127;
 
 // Every database has a db file stored in the data directory with file name <db_name>.db
 constexpr char db_dir[] = "/data/mini_db";
@@ -36,7 +36,7 @@ enum class PageType : uint8_t {
 	TABLE_PAGE, // regular data page
 	INDEX_LEAF_PAGE,
 	INDEX_INTERNAL_PAGE,
-	CATALOG_PAGE, 
+	CATALOG_PAGE,
 };
 
 enum class ColumnType : uint8_t {
@@ -47,15 +47,6 @@ enum class ColumnType : uint8_t {
 };
 
 // macros
-#define ERROR(msg)                       \
-	fprintf(stderr, "Error: %s\n", msg); \
-	exit(EXIT_FAILURE);
-
-#define ASSERT(condition, msg)                          \
-	if (!(condition)) {                                 \
-		fprintf(stderr, "Assertion failed: %s\n", msg); \
-		exit(EXIT_FAILURE);                             \
-	}
 
 #define LOG(msg) \
 	fprintf(stdout, "Log: %s\n", msg);

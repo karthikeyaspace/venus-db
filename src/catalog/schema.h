@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <stdexcept> // for std::invalid_argument
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -62,7 +63,7 @@ public:
 	// Columns are added in an order, for tuple serialization and deserialization
 	void AddColumn(const std::string& name, ColumnType type, bool is_primary) {
 		if (column_name_to_index_.find(name) != column_name_to_index_.end()) {
-			ERROR("Column with name '" + name + "' already exists in the schema.");
+			throw std::invalid_argument("Column with name '" + name + "' already exists in the schema.");
 		}
 		columns_.emplace_back(name, type, is_primary);
 		column_name_to_index_[name] = columns_.size() - 1;
@@ -71,7 +72,7 @@ public:
 	const Column& GetColumn(const std::string& name) const {
 		auto it = column_name_to_index_.find(name);
 		if (it == column_name_to_index_.end()) {
-			ERROR("Column with name '" + name + "' does not exist in the schema.");
+			throw std::invalid_argument("Column with name '" + name + "' does not exist in the schema.");
 		}
 		return columns_[it->second];
 	}

@@ -76,7 +76,7 @@ public:
 	Tuple(char* data, RID rid)
 	    : record_id_(std::move(rid)) {
 		if (data == nullptr) {
-			ERROR("Tuple data cannot be null");
+			throw std::invalid_argument("Tuple data cannot be null");
 		}
 		// Copy the data into the tuple's data vector
 		data_.assign(data, data + GetSize());
