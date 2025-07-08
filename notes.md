@@ -1,4 +1,4 @@
-Mini-DB
+Venus-DB
 
 A simple SQL database system to achieve a goal of understanding how the internal workings of a database system work.
 This is inspired by 2 people: 1. Sir Arpit Bhayani, 2. Prof. Andy Pavlo
@@ -62,17 +62,6 @@ Disk -> DB File -> Page -> Tuple
 Page in buffer pool is called frame
 
 
-## Catalog Table Contents
-- Database Table
-  - db_id, db_name, db_path, created_at
-- Table Table
-  - table_id, table_name, db_id, root_page_id, col_count, created_at
-- Column Table
-  - col_id, table_id, col_name, col_type, col_size, is_primary_key
-- Index Table
-  - index_id, table_id, index_name, col_id, root_page_id
-
-
 ## Tuple format
 - Record ID
   - page_id, slot_id
@@ -80,7 +69,6 @@ Page in buffer pool is called frame
   - null bitmap, size of tuple
 - Tuple Body
   - column values (fixed size for INT, FLOAT, CHAR(N))
-
 
 
 ## Architecture
@@ -126,13 +114,12 @@ Page in buffer pool is called frame
  -------------- | ------------------
  Physical Layer | **Storage**       
  Physical Layer | **Buffer Pool**   
- Logic Layer    | **Catalog**       
- Logic Layer    | **Access Methods**
  SQL Layer      | **Executor**      
  SQL Layer      | **Planner**       
  SQL Layer      | **Parser**        
  UI Layer       | **SQL Shell**     
 
+ Logic Layer    | **Access Methods**
 
 ## References
 - https://chatgpt.com/c/6854042b-becc-800e-876f-a66f8cf67cb7

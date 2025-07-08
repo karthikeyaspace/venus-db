@@ -1,6 +1,6 @@
 // src/common/utils.cpp
 
-namespace minidb
+namespace venus
 {
   // common utilities
-} // namespace minidb
+} // namespace venus

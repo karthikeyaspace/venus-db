@@ -5,7 +5,7 @@
 #include <limits>
 #include <string>
 
-namespace minidb {
+namespace venus {
 
 constexpr uint32_t PAGE_SIZE = 4096; // 4kb
 constexpr uint32_t BUFFER_POOL_SIZE = 128; // 128 pages
@@ -14,11 +14,10 @@ constexpr uint8_t LRUK_REPLACER_K = 5;
 constexpr uint32_t MAX_DATABASES = 2;
 constexpr uint32_t MAX_TABLES = 64; // per db
 constexpr uint32_t MAX_COLUMNS = 64; // per table
-constexpr uint32_t CHAR_LENGTH = 127;
+constexpr uint32_t CHAR_LENGTH = 255;
 
 // Every database has a db file stored in the data directory with file name <db_name>.db
-constexpr char db_dir[] = "/data/mini_db";
-constexpr char catalog_file[] = "/data/catalog.db";
+constexpr char db_dir[] = "/data";
 
 using page_id_t = uint32_t;
 using slot_id_t = uint16_t;
@@ -57,4 +56,4 @@ enum class ColumnType : uint8_t {
 	cname(cname&&) = delete;                 \
 	cname& operator=(cname&&) = delete;
 
-} // namespace minidb
+} // namespace venus

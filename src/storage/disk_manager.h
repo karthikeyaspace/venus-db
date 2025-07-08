@@ -12,7 +12,7 @@
  *   - Use a kernel‐bypass userspace driver (e.g. SPDK) so you talk NVMe/DAS devices directly.
  *   - But in all cases the hardware’s own firmware will still schedule incoming commands on the platter or flash chips.
  *
- * For MiniDB, we will use a simple file I/O interface to read and write pages, We shift to fsync() in future for writing pages.
+ * For VenusDB, we will use a simple file I/O interface to read and write pages, We shift to fsync() in future for writing pages.
  *
  * WritePage    - overwrite (or extend) an existing page
  * ReadPage     - load a page’s contents (scan)
@@ -46,7 +46,7 @@
 
 #include "common/config.h"
 
-namespace minidb {
+namespace venus {
 namespace storage {
 	class DiskManager {
 	public:
@@ -69,4 +69,4 @@ namespace storage {
 	};
 
 } // namespace storage
-} // namespace minidb
+} // namespace venus

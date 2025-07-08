@@ -7,7 +7,20 @@
  * It basically gives implementation over pages in the buffer pool.
  *
  * Table heap only communicates with buffer pool, not with disk manager directly.
+ * 
+ * Table heap is a collection of pages that store tuples of a single table,
+ * Every table has its own table heap, which is managed independently of other tables.
+ * Each table heap is identified by a unique page ID, which is the first page of the table.
  *
+ * An iterator is provided to iterate over the tuples in the table heap.
+ * When we have an index, we can use the index to find the right page and use an Iterator to iterate over the tuples in that page.
+ *
+ * To insert a tuple in table heap, we need to find a page with enough space to store the tuple.
+ * If no such page exists, we need to allocate a new page and insert the tuple there
+ * 
+ * To Find a tuple in table heap, we need to use the RID (Record ID) of the tuple.
+ * The RID is a unique identifier for a tuple in the table heap, which consists of the page ID and the slot ID.
+ * 
  */
 
 #pragma once
@@ -16,7 +29,7 @@
 #include "storage/page.h"
 #include "storage/tuple.h"
 
-namespace minidb {
+namespace venus {
 namespace table {
 	class TableHeap {
 	public:
@@ -66,10 +79,10 @@ namespace table {
 	private:
 		buffer::BufferPoolManager* bpm_;
 		const Schema* schema_;
-		page_id_t first_page_id_;
+		page_id_t first_page_id_; // to uniquely identify the table heap
 
 		DISALLOW_COPY_AND_MOVE(TableHeap);
 	};
 
 } // namespace storage
-} // namespace minidb
+} // namespace venus

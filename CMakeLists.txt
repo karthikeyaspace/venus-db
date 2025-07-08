@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(MiniDB CXX)
+project(VenusDB CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -27,7 +27,7 @@ file(GLOB_RECURSE SOURCES
     "${PROJECT_SOURCE_DIR}/storage/*.cpp"
 )
 
-add_executable(minidb
+add_executable(venus
     ${SOURCES}
 )
 
@@ -37,4 +37,4 @@ add_executable(minidb
 # cd build
 # cmake . .
 # make
-# ./minidb
+# ./venus

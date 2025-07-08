@@ -1,7 +1,7 @@
 // /src/buffer/buffer_pool.h
 
 /**
- * BufferPoolManager for mini-db.
+ * BufferPoolManager for VenusDB.
  *
  * Coordinates between DiskManager, TableHeap, and query executors.
  * Owns and operates the DiskManager.
@@ -40,7 +40,7 @@
 #include <list>
 #include <unordered_map>
 
-namespace minidb {
+namespace venus {
 namespace buffer {
 	class BufferPoolManager {
 	public:
@@ -53,7 +53,7 @@ namespace buffer {
 		Page* FetchPage(page_id_t page_id);
 		bool UnpinPage(page_id_t page_id, bool is_dirty);
 		bool FlushPage(page_id_t page_id);
-		page_id_t NewPage();
+		Page* NewPage();
 		bool DeletePage(page_id_t page_id);
 
 	private:

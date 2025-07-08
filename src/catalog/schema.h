@@ -8,7 +8,7 @@
  * Generally, a schema is stored in catalog as metadata for a table
  * Integrity constraints, Data types, are checked and type casted while inputing/outputing the data
  *
- * MiniDB offers only Int, Float, and Char data types for now.
+ * VenusDB offers only Int, Float, and Char data types for now.
  * Only primary key supported, no foreign keys or unique constraints.
  *
  * This is a single instance of column and schema
@@ -24,7 +24,7 @@
 
 #include "common/config.h"
 
-namespace minidb {
+namespace venus {
 
 class Column {
 public:
@@ -86,4 +86,4 @@ private:
 	// Disallow copy and move semantics
 	DISALLOW_COPY_AND_MOVE(Schema);
 };
-} // namespace minidb
+} // namespace venus

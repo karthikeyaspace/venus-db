@@ -2,7 +2,7 @@
 
 #include "storage/disk_manager.h"
 
-namespace minidb {
+namespace venus {
 namespace storage {
 
 	// Using OS file handling
@@ -75,4 +75,4 @@ namespace storage {
 	}
 
 } // namespace storage
-} // namespace minidb
+} // namespace venus

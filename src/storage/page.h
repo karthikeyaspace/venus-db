@@ -35,10 +35,11 @@
 #include "common/config.h"
 #include "storage/tuple.h"
 
-namespace minidb {
+namespace venus {
 struct PageHeader {
 	page_id_t page_id;
 	page_id_t next_page_id = INVALID_PAGE_ID;
+	page_id_t prev_page_id = INVALID_PAGE_ID;
 	PageType page_type;
 	uint16_t num_slots;
 	uint32_t free_space_ptr;
@@ -50,8 +51,8 @@ struct PageHeader {
 	}
 };
 
-struct SlotDirectory {
-	uint32_t tuple_offset;
+struct 	SlotDirectory {
+	uint32_t tuple_offset; // offset of tuple from the start of the page
 	uint16_t tuple_length;
 	bool is_live;
 };
@@ -72,6 +73,8 @@ public:
 		header->free_space_ptr = sizeof(PageHeader); // end of page header(there are no slots during init)
 		header->tuple_start_ptr = PAGE_SIZE; // start of tuples - end of page
 		header->is_dirty = false;
+		header->next_page_id = INVALID_PAGE_ID; // 
+		header->prev_page_id = INVALID_PAGE_ID; 
 	}
 
 	PageHeader* GetHeader() {
@@ -117,9 +120,6 @@ public:
 		return GetHeader()->page_type;
 	}
 
-	bool InsertTuple(const Tuple& tuple, RID* rid);
-	bool GetTuple(slot_id_t slot_id, Tuple* tuple) const;
-
 private:
 	// Pointer to the byte array representing the page
 	// size => PAGE_SIZE
@@ -127,4 +127,4 @@ private:
 
 	DISALLOW_COPY_AND_MOVE(Page);
 };
-} // namespace minidb
+} // namespace venus

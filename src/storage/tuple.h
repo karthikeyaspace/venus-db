@@ -2,14 +2,14 @@
 
 /**
  * Tuple represents a row in a table.
- * Since MiniDB is a row-oriented database, a tuple stores entire column data contents of a record.
- * Currently MiniDB supports only INT, FLOAT, and CHAR(fixed length) declared at /src/common/config.h
+ * Since VenusDB is a row-oriented database, a tuple stores entire column data contents of a record.
+ * Currently VenusDB supports only INT, FLOAT, and CHAR(fixed length) declared at /src/common/config.h
  * Each tuple is identified by a Record ID (RID)
  * Tuple can be of any length based on the schema of the table
  * Assuming that all the data is not null based on schema, to avoid a null bitmap
  * We use a fixed length encoding and decoding based on the 'Schema' of the table.
  * Generally, A null bitmap is used to indicate which columns are null in a tuple.
- * No nullbitmap for minidb - strictly enforcing that all columns are not null.
+ * No nullbitmap for venusdb - strictly enforcing that all columns are not null.
  *
  * So we have raw data in the tuple body based on 'Schema' of the table.
  *
@@ -37,7 +37,7 @@
 #include "common/config.h"
 #include "storage/page.h"
 
-namespace minidb {
+namespace venus {
 
 // Declared at /src/catalog/schema.h
 class Schema;
@@ -99,10 +99,17 @@ public:
 		return record_id_;
 	}
 
+	void SetRID(const RID& rid) const {
+		if (data_.empty()) {
+			throw std::runtime_error("Cannot set RID on an empty tuple");
+		}
+		record_id_ = rid;
+	}
+
 	const char* GetValue(uint32_t idx, const Schema* schema) const;
 
 private:
-	RID record_id_;
+	mutable RID record_id_;
 	std::vector<char> data_; // tuple header + body
 
 	void Serialize(const std::vector<const char*>& values, const Schema* schema);
@@ -110,4 +117,4 @@ private:
 	DISALLOW_COPY_AND_MOVE(Tuple);
 };
 
-} // namespace minidb
+} // namespace venus
