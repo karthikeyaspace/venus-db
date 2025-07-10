@@ -9,7 +9,7 @@
  * Assuming that all the data is not null based on schema, to avoid a null bitmap
  * We use a fixed length encoding and decoding based on the 'Schema' of the table.
  * Generally, A null bitmap is used to indicate which columns are null in a tuple.
- * No nullbitmap for venusdb - strictly enforcing that all columns are not null.
+ * No nullbitmap for VenusDB - strictly enforcing that all columns are not null.
  *
  * So we have raw data in the tuple body based on 'Schema' of the table.
  *
@@ -23,6 +23,13 @@
  * | Column Value 1 (variable/fixed)    |
  * +------------------------------------+ ...
  *
+ * 
+ * Generally size of tuple varies due to variable length columns.
+ * But for fixed length columns, we can have a fixed size tuple.
+ * For example, if we have a table with 3 columns: INT, FLOAT, CHAR(10)
+ * The tuple size will be fixed as 4 + 4 + 10 = 18 bytes
+ * 
+ * p
  */
 
 #pragma once
@@ -113,8 +120,7 @@ private:
 	std::vector<char> data_; // tuple header + body
 
 	void Serialize(const std::vector<const char*>& values, const Schema* schema);
-
-	DISALLOW_COPY_AND_MOVE(Tuple);
+	void Deserialize(const char *data, const Schema* schema);
 };
 
 } // namespace venus

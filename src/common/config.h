@@ -14,7 +14,7 @@ constexpr uint8_t LRUK_REPLACER_K = 5;
 constexpr uint32_t MAX_DATABASES = 2;
 constexpr uint32_t MAX_TABLES = 64; // per db
 constexpr uint32_t MAX_COLUMNS = 64; // per table
-constexpr uint32_t CHAR_LENGTH = 255;
+constexpr uint32_t MAX_CHAR_LENGTH = 255;
 
 // Every database has a db file stored in the data directory with file name <db_name>.db
 constexpr char db_dir[] = "/data";

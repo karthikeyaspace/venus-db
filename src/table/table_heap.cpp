@@ -33,13 +33,13 @@ namespace table {
 				else {
 					Page* prev_page = bpm_->FetchPage(prev_page_id);
 					if (prev_page == nullptr) {
-						bpm_->UnpinPage(prev_page->GetPageId(), true);
+						bpm_->SetDirtyPage(prev_page->GetPageId(), true);
 						return false;
 					}
 
 					prev_page->GetHeader()->next_page_id = new_page_id;
 					page->GetHeader()->prev_page_id = prev_page_id;
-					bpm_->UnpinPage(prev_page->GetPageId(), true);
+					bpm_->SetDirtyPage(prev_page->GetPageId(), true);
 				}
 				curr_page_id = new_page_id;
 				break; // got the page, now allocate tuple
@@ -56,7 +56,7 @@ namespace table {
 					// go to next page
 					prev_page_id = curr_page_id;
 					curr_page_id = page->GetHeader()->next_page_id;
-					bpm_->UnpinPage(page->GetPageId(), false);
+					bpm_->SetDirtyPage(page->GetPageId(), false);
 				} else {
 					// Enough space found, insert the tuple
 					break;
@@ -72,11 +72,11 @@ namespace table {
 		SlotDirectory* slot = reinterpret_cast<SlotDirectory*>(page->GetData() + sizeof(PageHeader) + (slot_id * sizeof(SlotDirectory)));
 		slot->is_live = true;
 		slot->tuple_length = tuple.GetSize();
-		
+
 		// offset from start of page
 		slot->tuple_offset = page->GetHeader()->tuple_start_ptr + tuple.GetSize();
 
-		// copy tuple data to page 
+		// copy tuple data to page
 		memcpy(page->GetData() + slot->tuple_offset, tuple.GetData(), tuple.GetSize());
 
 		// update page
@@ -88,37 +88,179 @@ namespace table {
 		rid->slot_id = slot_id;
 		tuple.SetRID(*rid);
 
-		// unpin and mark as dirty
-		bpm_->UnpinPage(page->GetPageId(), true);
+		bpm_->SetDirtyPage(page->GetPageId(), true);
 
 		return true;
 	}
 
 	bool TableHeap::DeleteTuple(const RID& rid) {
-		// Implementation for deleting a tuple from the table heap
-		return false;
+		page_id_t page_id = rid.page_id;
+		slot_id_t slot_id = rid.slot_id;
+
+		Page* page = bpm_->FetchPage(page_id);
+		if (page == nullptr) {
+			return false;
+		}
+
+		if (page->GetHeader()->page_type != PageType::TABLE_PAGE) {
+			return false;
+		}
+
+		SlotDirectory* slot = page->GetSlotDirectory(slot_id);
+
+		if (slot == nullptr || !slot->is_live) {
+			return false;
+		}
+
+		slot->is_live = false;
+
+		return true;
 	}
 
 	bool TableHeap::UpdateTuple(const Tuple& new_tuple, const RID& rid) {
-		// Implementation for updating a tuple in the table heap
-		// This will involve checking if the new tuple size matches the old one,
-		// and either replacing it or deleting and inserting a new one.
-		return false;
+
+		// flow
+		// 1. Get the existing tuple using the RID
+		// 2. If the sizes are the same, copy the new tuple data to the existing slot
+		// 3. If the sizes are different, delete the existing tuple
+		//    and insert the new tuple, ensuring the RID remains the same
+		if (new_tuple.GetSize() == 0) {
+			return false;
+		}
+
+		Tuple* existing_tuple = GetTuple(rid);
+
+		if (existing_tuple == nullptr) {
+			return false;
+		}
+
+		if (existing_tuple->GetSize() == new_tuple.GetSize()) {
+			Page* page = bpm_->FetchPage(rid.page_id);
+			if (page == nullptr) {
+				delete existing_tuple;
+				return false;
+			}
+
+			if (page->GetHeader()->page_type != PageType::TABLE_PAGE) {
+				delete existing_tuple;
+				return false;
+			}
+
+			SlotDirectory* slot = page->GetSlotDirectory(rid.slot_id);
+			if (slot == nullptr || !slot->is_live) {
+				delete existing_tuple;
+				return false;
+			}
+
+			memcpy(page->GetData() + slot->tuple_offset, new_tuple.GetData(), new_tuple.GetSize());
+			bpm_->SetDirtyPage(page->GetPageId(), true);
+			existing_tuple->SetRID(rid);
+			delete existing_tuple;
+			return true;
+		} else {
+			RID new_rid;
+			bool inserted = InsertTuple(new_tuple, &new_rid);
+			if (!inserted) {
+				delete existing_tuple;
+				return false;
+			}
+
+			bool deleted = DeleteTuple(rid);
+			if (!deleted) {
+				delete existing_tuple;
+				return false;
+			}
+
+			new_tuple.SetRID(new_rid);
+			delete existing_tuple;
+			return true;
+		}
 	}
 
-	bool TableHeap::GetTuple(const RID& rid, Tuple* tuple) const {
-		// Implementation for retrieving a tuple from the table heap
-		return false;
+	Tuple* TableHeap::GetTuple(const RID& rid) {
+		page_id_t page_id = rid.page_id;
+		slot_id_t slot_id = rid.slot_id;
+
+		Page* page = bpm_->FetchPage(page_id);
+		if (page == nullptr || slot_id >= page->GetHeader()->num_slots) {
+			return nullptr;
+		}
+
+		if (page->GetHeader()->page_type != PageType::TABLE_PAGE) {
+			return nullptr;
+		}
+
+		SlotDirectory* slot = page->GetSlotDirectory(slot_id);
+		if (slot == nullptr || !slot->is_live) {
+			return nullptr;
+		}
+
+		char* data = page->GetData() + slot->tuple_offset;
+		if (data == nullptr) {
+			return nullptr;
+		}
+
+		Tuple* tuple = new Tuple(data, rid);
+
+		return tuple;
 	}
 
 	TableHeap::Iterator TableHeap::begin() {
-		// Implementation for returning an iterator pointing to the first tuple
-		return Iterator(this, RID());
+		Page* page = bpm_->FetchPage(first_page_id_);
+		if (page == nullptr) {
+			return Iterator(this, RID());
+		}
+
+		// first slot in page
+		slot_id_t first_slot_id = 0;
+		RID first_rid(first_page_id_, first_slot_id);
+		SlotDirectory* first_slot = page->GetSlotDirectory(first_slot_id);
+
+		if (first_slot == nullptr || !first_slot->is_live) {
+			// find next best slot
+			while (first_slot_id < page->GetHeader()->num_slots) {
+				first_slot = page->GetSlotDirectory(first_slot_id);
+				if (first_slot != nullptr && first_slot->is_live) {
+					break;
+				}
+				first_slot_id++;
+			}
+			if (first_slot_id >= page->GetHeader()->num_slots) {
+				return Iterator(this, RID());
+			}
+			first_rid.slot_id = first_slot_id;
+		}
+
+		return Iterator(this, first_rid);
 	}
 
 	TableHeap::Iterator TableHeap::end() {
-		// Implementation for returning an iterator pointing to the end of the table
-		return Iterator(this, RID(INVALID_PAGE_ID, 0));
+		Page* page = bpm_->FetchPage(first_page_id_);
+		if (page == nullptr) {
+			return Iterator(this, RID());
+		}
+
+		slot_id_t last_slot_id = page->GetHeader()->num_slots - 1; // slots are 0-indexed
+		RID last_rid(first_page_id_, last_slot_id);
+
+		SlotDirectory* last_slot = page->GetSlotDirectory(last_slot_id);
+		if (last_slot == nullptr || !last_slot->is_live) {
+			while (last_slot_id > 0) {
+				last_slot = page->GetSlotDirectory(last_slot_id);
+				if (last_slot != nullptr && last_slot->is_live) {
+					break;
+				}
+				last_slot_id--;
+			}
+
+			if (last_slot_id < 0) {
+				return Iterator(this, RID());
+			}
+
+			last_rid.slot_id = last_slot_id;
+		}
+
+		return Iterator(this, last_rid);
 	}
 
 }

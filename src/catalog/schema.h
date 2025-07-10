@@ -43,7 +43,7 @@ public:
 		case ColumnType::FLOAT:
 			return sizeof(float);
 		case ColumnType::CHAR:
-			return sizeof(char) * CHAR_LENGTH;
+			return sizeof(char) * MAX_CHAR_LENGTH;
 		default:
 			return 0;
 		}

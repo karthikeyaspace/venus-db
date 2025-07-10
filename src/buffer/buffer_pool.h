@@ -51,7 +51,7 @@ namespace buffer {
 		~BufferPoolManager();
 
 		Page* FetchPage(page_id_t page_id);
-		bool UnpinPage(page_id_t page_id, bool is_dirty);
+		bool SetDirtyPage(page_id_t page_id, bool is_dirty);
 		bool FlushPage(page_id_t page_id);
 		Page* NewPage();
 		bool DeletePage(page_id_t page_id);

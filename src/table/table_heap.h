@@ -7,7 +7,7 @@
  * It basically gives implementation over pages in the buffer pool.
  *
  * Table heap only communicates with buffer pool, not with disk manager directly.
- * 
+ *
  * Table heap is a collection of pages that store tuples of a single table,
  * Every table has its own table heap, which is managed independently of other tables.
  * Each table heap is identified by a unique page ID, which is the first page of the table.
@@ -17,10 +17,10 @@
  *
  * To insert a tuple in table heap, we need to find a page with enough space to store the tuple.
  * If no such page exists, we need to allocate a new page and insert the tuple there
- * 
+ *
  * To Find a tuple in table heap, we need to use the RID (Record ID) of the tuple.
  * The RID is a unique identifier for a tuple in the table heap, which consists of the page ID and the slot ID.
- * 
+ *
  */
 
 #pragma once
@@ -54,12 +54,22 @@ namespace table {
 		bool UpdateTuple(const Tuple& new_tuple, const RID& rid);
 
 		// tuple is passed by reference, so it is not owned by the caller
-		bool GetTuple(const RID& rid, Tuple* tuple) const;
+		Tuple* GetTuple(const RID& rid);
 
 		// for sequential scans
 		class Iterator {
 		public:
-			Iterator(TableHeap* table_heap, RID rid);
+			Iterator(TableHeap* table_heap, RID rid)
+			    : table_heap_(table_heap)
+			    , current_rid_(rid) {
+
+				Tuple* tuple = table_heap_->GetTuple(current_rid_);
+				if (tuple != nullptr) {
+					current_rid_ = tuple->GetRID();
+					current_tuple_ = *tuple;
+					delete tuple;
+				}
+			};
 
 			const Tuple& operator*();
 			Tuple* operator->();

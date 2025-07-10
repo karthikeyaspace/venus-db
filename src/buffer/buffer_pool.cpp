@@ -47,9 +47,7 @@ namespace buffer {
 		return new_page;
 	}
 
-	// Generally, Pining and Unpinning involves a `pin_count` to track how many entities are using the page.
-	// For Venus, we just set the page to dirty
-	bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
+	bool BufferPoolManager::SetDirtyPage(page_id_t page_id, bool is_dirty) {
 		auto it = pages_.find(page_id);
 		if (it == pages_.end()) {
 			return false;
