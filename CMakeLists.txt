@@ -12,19 +12,15 @@ set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 set(PROJECT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 include_directories(
-    # ${PROJECT_SOURCE_DIR}/catalog
-    # ${PROJECT_SOURCE_DIR}/common
-    # ${PROJECT_SOURCE_DIR}/executor
-    ${PROJECT_SOURCE_DIR}/storage
-    # ${PROJECT_SOURCE_DIR}/index
-    # ${PROJECT_SOURCE_DIR}/buffer
-    # ${PROJECT_SOURCE_DIR}/parser
-    # ${PROJECT_SOURCE_DIR}/planner
+    ${PROJECT_SOURCE_DIR}
 )
-
+    
 file(GLOB_RECURSE SOURCES 
-    "${PROJECT_SOURCE_DIR}/*.cpp"
     "${PROJECT_SOURCE_DIR}/storage/*.cpp"
+    "${PROJECT_SOURCE_DIR}/buffer/*.cpp"
+    "${PROJECT_SOURCE_DIR}/table/*.cpp"
+    "${PROJECT_SOURCE_DIR}/common/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp"
 )
 
 add_executable(venus

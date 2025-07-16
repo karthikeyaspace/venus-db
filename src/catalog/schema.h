@@ -77,6 +77,13 @@ public:
 		return columns_[it->second];
 	}
 
+	const Column& GetColumn(size_t index) const {
+		if (index >= columns_.size()) {
+			throw std::out_of_range("Column index out of range");
+		}
+		return columns_[index];
+	}
+
 	size_t GetColumnCount() const { return columns_.size(); }
 
 private:

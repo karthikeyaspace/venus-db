@@ -85,8 +85,10 @@ public:
 		if (data == nullptr) {
 			throw std::invalid_argument("Tuple data cannot be null");
 		}
+		// First read the size from the data
+		uint32_t tuple_size = *reinterpret_cast<const uint32_t*>(data);
 		// Copy the data into the tuple's data vector
-		data_.assign(data, data + GetSize());
+		data_.assign(data, data + tuple_size);
 	}
 
 	const char* GetData() const {

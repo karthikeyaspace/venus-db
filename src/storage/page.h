@@ -36,6 +36,12 @@
 #include "storage/tuple.h"
 
 namespace venus {
+struct SlotDirectory {
+	uint32_t tuple_offset; // offset of tuple from the start of the page
+	uint16_t tuple_length;
+	bool is_live;
+};
+
 struct PageHeader {
 	page_id_t page_id;
 	page_id_t next_page_id = INVALID_PAGE_ID;
@@ -49,12 +55,6 @@ struct PageHeader {
 	uint32_t GetMetaSpace() const { // Page header + slot directory
 		return sizeof(PageHeader) + (num_slots * sizeof(SlotDirectory));
 	}
-};
-
-struct 	SlotDirectory {
-	uint32_t tuple_offset; // offset of tuple from the start of the page
-	uint16_t tuple_length;
-	bool is_live;
 };
 
 class Page {
@@ -73,8 +73,8 @@ public:
 		header->free_space_ptr = sizeof(PageHeader); // end of page header(there are no slots during init)
 		header->tuple_start_ptr = PAGE_SIZE; // start of tuples - end of page
 		header->is_dirty = false;
-		header->next_page_id = INVALID_PAGE_ID; // 
-		header->prev_page_id = INVALID_PAGE_ID; 
+		header->next_page_id = INVALID_PAGE_ID; //
+		header->prev_page_id = INVALID_PAGE_ID;
 	}
 
 	PageHeader* GetHeader() {

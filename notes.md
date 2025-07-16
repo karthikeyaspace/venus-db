@@ -133,3 +133,13 @@ Page in buffer pool is called frame
 - https://www.databass.dev/
 - https://github.com/JyotinderSingh/dropdb
 - https://github.com/Sahilb315/AtomixDB
+
+
+
+## Various std error
+- invalid_argument
+- out_of_range
+- runtime_error
+- logic_error
+- system_error
+- overflow_error

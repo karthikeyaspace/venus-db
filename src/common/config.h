@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <limits>
 #include <string>
+#include <iostream>
 
 namespace venus {
 
@@ -14,10 +15,10 @@ constexpr uint8_t LRUK_REPLACER_K = 5;
 constexpr uint32_t MAX_DATABASES = 2;
 constexpr uint32_t MAX_TABLES = 64; // per db
 constexpr uint32_t MAX_COLUMNS = 64; // per table
-constexpr uint32_t MAX_CHAR_LENGTH = 255;
+constexpr uint32_t MAX_CHAR_LENGTH = 32;
 
 // Every database has a db file stored in the data directory with file name <db_name>.db
-constexpr char db_dir[] = "/data";
+constexpr const char* db_dir = "/mnt/d/KARTHIKEYA/PROJECTS/YO2/venus-db/data";
 
 using page_id_t = uint32_t;
 using slot_id_t = uint16_t;
@@ -48,7 +49,9 @@ enum class ColumnType : uint8_t {
 // macros
 
 #define LOG(msg) \
-	fprintf(stdout, "Log: %s\n", msg);
+	do { \
+		std::cout << "[Log] " << msg << std::endl; \
+	} while(0)
 
 #define DISALLOW_COPY_AND_MOVE(cname)        \
 	cname(const cname&) = delete;            \

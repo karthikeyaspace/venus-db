@@ -18,6 +18,17 @@ namespace storage {
 		db_io_.seekg(0, std::ios::end);
 		file_size_ = db_io_.tellg();
 		db_io_.seekg(0, std::ios::beg);
+		
+		// Calculate next_page_id based on existing file size
+		if (file_size_ > 0) {
+			next_page_id_ = static_cast<page_id_t>(file_size_ / PAGE_SIZE);
+		}
+	}
+
+	DiskManager::~DiskManager() {
+		if (db_io_.is_open()) {
+			db_io_.close();
+		}
 	}
 
 	void DiskManager::ReadPage(page_id_t page_id, char* page_data) {
@@ -30,8 +41,6 @@ namespace storage {
 		if (!db_io_.read(page_data, PAGE_SIZE)) {
 			throw std::runtime_error("Failed to read page from disk");
 		}
-
-		db_io_.close();
 	}
 
 	void DiskManager::WritePage(page_id_t page_id, const char* page_data) {
@@ -50,9 +59,9 @@ namespace storage {
 			file_size_ = offset + PAGE_SIZE;
 		}
 
-		db_io_.flush(); // force policy
+		LOG("Disk Manager: WritePage - Page ID: " + std::to_string(page_id) + ", Offset: " + std::to_string(offset) + ", Size: " + std::to_string(PAGE_SIZE) + ", File Size: " + std::to_string(file_size_));
 
-		db_io_.close();
+		db_io_.flush(); // force policy
 	}
 
 	page_id_t DiskManager::AllocatePage() {

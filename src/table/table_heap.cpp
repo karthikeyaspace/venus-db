@@ -74,7 +74,7 @@ namespace table {
 		slot->tuple_length = tuple.GetSize();
 
 		// offset from start of page
-		slot->tuple_offset = page->GetHeader()->tuple_start_ptr + tuple.GetSize();
+		slot->tuple_offset = page->GetHeader()->tuple_start_ptr - tuple.GetSize();
 
 		// copy tuple data to page
 		memcpy(page->GetData() + slot->tuple_offset, tuple.GetData(), tuple.GetSize());
@@ -235,33 +235,82 @@ namespace table {
 	}
 
 	TableHeap::Iterator TableHeap::end() {
-		Page* page = bpm_->FetchPage(first_page_id_);
-		if (page == nullptr) {
-			return Iterator(this, RID());
-		}
-
-		slot_id_t last_slot_id = page->GetHeader()->num_slots - 1; // slots are 0-indexed
-		RID last_rid(first_page_id_, last_slot_id);
-
-		SlotDirectory* last_slot = page->GetSlotDirectory(last_slot_id);
-		if (last_slot == nullptr || !last_slot->is_live) {
-			while (last_slot_id > 0) {
-				last_slot = page->GetSlotDirectory(last_slot_id);
-				if (last_slot != nullptr && last_slot->is_live) {
-					break;
-				}
-				last_slot_id--;
-			}
-
-			if (last_slot_id < 0) {
-				return Iterator(this, RID());
-			}
-
-			last_rid.slot_id = last_slot_id;
-		}
-
-		return Iterator(this, last_rid);
+		return Iterator(this, RID());
 	}
 
+	// Iterator method implementations
+	const Tuple& TableHeap::Iterator::operator*() {
+		return current_tuple_;
+	}
+
+	Tuple* TableHeap::Iterator::operator->() {
+		return &current_tuple_;
+	}
+
+	TableHeap::Iterator& TableHeap::Iterator::operator++() {
+		// Move to next valid tuple
+		slot_id_t next_slot_id = current_rid_.slot_id + 1;
+		page_id_t current_page_id = current_rid_.page_id;
+		
+		Page* page = table_heap_->bpm_->FetchPage(current_page_id);
+		if (page == nullptr) {
+			current_rid_ = RID(); // Invalid RID to indicate end
+			return *this;
+		}
+		
+		// Look for next valid slot in current page
+		while (next_slot_id < page->GetHeader()->num_slots) {
+			SlotDirectory* slot = page->GetSlotDirectory(next_slot_id);
+			if (slot != nullptr && slot->is_live) {
+				current_rid_.slot_id = next_slot_id;
+				
+				// Update current_tuple_
+				Tuple* tuple = table_heap_->GetTuple(current_rid_);
+				if (tuple != nullptr) {
+					current_tuple_ = *tuple;
+					delete tuple;
+				}
+				return *this;
+			}
+			next_slot_id++;
+		}
+		
+		// No more valid slots in current page, try next page
+		page_id_t next_page_id = page->GetHeader()->next_page_id;
+		if (next_page_id != INVALID_PAGE_ID) {
+			Page* next_page = table_heap_->bpm_->FetchPage(next_page_id);
+			if (next_page != nullptr) {
+				// Look for first valid slot in next page
+				for (slot_id_t slot_id = 0; slot_id < next_page->GetHeader()->num_slots; ++slot_id) {
+					SlotDirectory* slot = next_page->GetSlotDirectory(slot_id);
+					if (slot != nullptr && slot->is_live) {
+						current_rid_.page_id = next_page_id;
+						current_rid_.slot_id = slot_id;
+						
+						// Update current_tuple_
+						Tuple* tuple = table_heap_->GetTuple(current_rid_);
+						if (tuple != nullptr) {
+							current_tuple_ = *tuple;
+							delete tuple;
+						}
+						return *this;
+					}
+				}
+			}
+		}
+		
+		// No more valid tuples
+		current_rid_ = RID(); // Invalid RID to indicate end
+		return *this;
+	}
+
+	bool TableHeap::Iterator::operator==(const Iterator& other) const {
+		return current_rid_.page_id == other.current_rid_.page_id && 
+	       current_rid_.slot_id == other.current_rid_.slot_id;
+	}
+
+	bool TableHeap::Iterator::operator!=(const Iterator& other) const {
+		return !(*this == other);
+	}
 }
 }

@@ -111,8 +111,11 @@ namespace buffer {
 		for (auto& pair : pages_) {
 			Page* page = pair.second;
 			if (page->IsDirty()) {
+				LOG("BPM destructor: Flushing dirty page: " + std::to_string(page->GetPageId()));
 				disk_manager_->WritePage(page->GetPageId(), page->GetData());
 			}
+
+			LOG("BPM destructor: Deallocating page: " + std::to_string(page->GetPageId()));
 
 			delete[] page->GetData();
 			delete page;

@@ -56,6 +56,10 @@ namespace table {
 		// tuple is passed by reference, so it is not owned by the caller
 		Tuple* GetTuple(const RID& rid);
 
+		const Schema* GetSchema() const {
+			return schema_;
+		}
+
 		// for sequential scans
 		class Iterator {
 		public:
