@@ -48,6 +48,7 @@ int main() {
 
 	while (true) {
 		int option;
+		std::cout << std::endl;
 		std::cout << "1: Create Database\n"
 		          << "2: Use Database\n"
 		          << "3: Insert Tuple\n"
@@ -257,17 +258,20 @@ void insert_tuple_interactive(BufferPoolManager* bpm, Schema* schema) {
 	TableHeap table_heap(bpm, schema, table_page_id);
 
 	std::cout << "\n--- Insert Tuple ---" << std::endl;
-	std::cout << "Schema: (id INT, name CHAR, score FLOAT)" << std::endl;
 
-	std::string id_str, name, score_str;
-	std::cout << "Enter id: ";
-	std::cin >> id_str;
-	std::cout << "Enter name: ";
-	std::cin >> name;
-	std::cout << "Enter score: ";
-	std::cin >> score_str;
+	std::vector<std::string> values;
+	for (size_t i = 0; i < schema->GetColumnCount(); ++i) {
+		const Column& column = schema->GetColumn(i);
+		std::string value;
+		std::cout << "Enter " << column.GetName() << ": ";
+		std::cin >> value;
+		values.push_back(value);
+	}
 
-	insert_tuple(&table_heap, schema, { id_str, name, score_str });
+	std::cout << std::endl;
+
+	insert_tuple(&table_heap, schema, values);
+
 	bpm->FlushPage(table_page_id);
 }
 
