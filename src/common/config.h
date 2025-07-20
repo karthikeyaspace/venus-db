@@ -2,17 +2,17 @@
 #pragma once
 
 #include <cstdint>
+#include <iostream>
 #include <limits>
 #include <string>
-#include <iostream>
 
 namespace venus {
 
 constexpr uint32_t PAGE_SIZE = 4096; // 4kb
-constexpr uint32_t BUFFER_POOL_SIZE = 128; // 128 pages
+constexpr uint32_t MAX_BUFFER_POOL_SIZE = 128; // 128 pages
 constexpr uint8_t LRUK_REPLACER_K = 5;
 
-constexpr uint32_t MAX_DATABASES = 2;
+constexpr uint32_t MAX_DATABASES = 5;
 constexpr uint32_t MAX_TABLES = 64; // per db
 constexpr uint32_t MAX_COLUMNS = 64; // per table
 constexpr uint32_t MAX_CHAR_LENGTH = 32;
@@ -31,6 +31,15 @@ using index_id_t = uint32_t;
 constexpr page_id_t INVALID_PAGE_ID = std::numeric_limits<page_id_t>::max();
 constexpr frame_id_t INVALID_FRAME_ID = std::numeric_limits<frame_id_t>::max();
 
+constexpr page_id_t MASTER_TABLES_PAGE_ID = 0;
+constexpr page_id_t MASTER_COLUMNS_PAGE_ID = 1;
+constexpr page_id_t MASTER_INDEXES_PAGE_ID = 2;
+constexpr page_id_t FIRST_USABLE_PAGE_ID = 3;
+
+constexpr const char* MASTER_TABLES_NAME = "master_tables";
+constexpr const char* MASTER_COLUMNS_NAME = "master_columns";
+constexpr const char* MASTER_INDEXES_NAME = "master_indexes";
+
 enum class PageType : uint8_t {
 	INVALID_PAGE = 0,
 	TABLE_PAGE, // regular data page
@@ -48,10 +57,10 @@ enum class ColumnType : uint8_t {
 
 // macros
 
-#define LOG(msg) \
-	do { \
+#define LOG(msg)                                   \
+	do {                                           \
 		std::cout << "[Log] " << msg << std::endl; \
-	} while(0)
+	} while (0)
 
 #define DISALLOW_COPY_AND_MOVE(cname)        \
 	cname(const cname&) = delete;            \

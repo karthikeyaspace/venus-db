@@ -38,7 +38,22 @@ namespace buffer {
 		// create new page
 		Page* new_page = new Page(new char[PAGE_SIZE]);
 		new_page->NewPage(page_id, PageType::TABLE_PAGE);
-		disk_manager_->ReadPage(page_id, new_page->GetData());
+
+		// Try to read page from disk - if it doesn't exist, return nullptr
+		try {
+			disk_manager_->ReadPage(page_id, new_page->GetData());
+		} catch (const std::out_of_range&) {
+			// Page doesn't exist on disk
+			delete[] new_page->GetData();
+			delete new_page;
+			return nullptr;
+		} catch (const std::runtime_error&) {
+			// Failed to read page from disk
+			delete[] new_page->GetData();
+			delete new_page;
+			return nullptr;
+		}
+
 		new_page->GetHeader()->page_id = page_id;
 
 		pages_[page_id] = new_page;
@@ -84,6 +99,40 @@ namespace buffer {
 		disk_manager_->WritePage(new_page_id, new_page->GetData());
 
 		pages_[new_page_id] = new_page;
+		lru_list_.push_front(new_page);
+
+		return new_page;
+	}
+
+	Page* BufferPoolManager::NewPage(page_id_t page_id) {
+		if (page_id == INVALID_PAGE_ID) {
+			return nullptr;
+		}
+
+		auto it = pages_.find(page_id);
+		if (it != pages_.end()) {
+			return it->second;
+		}
+
+		// Evict a page if buffer pool is full
+		if (lru_list_.size() >= pool_size_) {
+			Page* victim = lru_list_.back();
+			lru_list_.pop_back();
+			pages_.erase(victim->GetPageId());
+
+			if (victim->IsDirty()) {
+				disk_manager_->WritePage(victim->GetPageId(), victim->GetData());
+			}
+
+			victim->NewPage(INVALID_PAGE_ID, PageType::INVALID_PAGE);
+			delete[] victim->GetData();
+			delete victim;
+		}
+
+		Page* new_page = new Page(new char[PAGE_SIZE]);
+		new_page->NewPage(page_id, PageType::TABLE_PAGE);
+
+		pages_[page_id] = new_page;
 		lru_list_.push_front(new_page);
 
 		return new_page;

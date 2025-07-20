@@ -18,7 +18,7 @@ This is inspired by 2 people: 1. Sir Arpit Bhayani, 2. Prof. Andy Pavlo
 
 ## Supporting Commands
 - CREATE/DROP/USE/SHOW DATABASE
-- CREATE/DROP/SHOW TABLE
+- CREATE/DROP/SHOW TABLE(s)
 - SELECT/INSERT on table
 - UPDATE/DELETE on table
 - CREATE/DROP/SHOW INDEX
@@ -108,19 +108,6 @@ Page in buffer pool is called frame
 └──────────────────────────────────┘
 
 
-## Order
-
- **Layer**      | **Component**     
- -------------- | ------------------
- Physical Layer | **Storage**       
- Physical Layer | **Buffer Pool**   
- SQL Layer      | **Executor**      
- SQL Layer      | **Planner**       
- SQL Layer      | **Parser**        
- UI Layer       | **SQL Shell**     
-
- Logic Layer    | **Access Methods**
-
 ## References
 - https://chatgpt.com/c/6854042b-becc-800e-876f-a66f8cf67cb7
 
@@ -135,6 +122,19 @@ Page in buffer pool is called frame
 - https://github.com/Sahilb315/AtomixDB
 
 
+## Ownership
+
+NetworkEngine
+DatabaseEngine
+├── DiskManager
+├── BufferPoolManager  
+├── CatalogManager
+├── IndexManager
+└── ExecutionEngine
+    ├── Parser
+    ├── Planner
+    └── Executor
+
 
 ## Various std error
 - invalid_argument
@@ -143,3 +143,12 @@ Page in buffer pool is called frame
 - logic_error
 - system_error
 - overflow_error
+
+
+
+todo:
+- remake draw io, incl database mgr, network mgr, 
+- sort out catalog manager
+- sort out tuple insertion logic
+- add more error handling
+- make 2nd phase test with catalog, bpm, dm, table heap, db manager

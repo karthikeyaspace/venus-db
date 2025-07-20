@@ -28,14 +28,16 @@ namespace venus {
 
 class Column {
 public:
-	Column(std::string name, ColumnType type, bool is_primary)
+	Column(std::string name, ColumnType type, bool is_primary, size_t ordinal_position)
 	    : name_(std::move(name))
 	    , type_(type)
-	    , is_primary_(is_primary) { }
+	    , is_primary_(is_primary)
+	    , ordinal_position_(ordinal_position) { }
 
 	const std::string& GetName() const { return name_; }
 	ColumnType GetType() const { return type_; }
 	bool IsPrimary() const { return is_primary_; }
+	size_t GetOrdinalPosition() const { return ordinal_position_; }
 	size_t GetLength() const {
 		switch (type_) {
 		case ColumnType::INT:
@@ -52,6 +54,7 @@ public:
 private:
 	std::string name_;
 	ColumnType type_;
+	size_t ordinal_position_;
 	bool is_primary_;
 };
 
@@ -61,11 +64,11 @@ public:
 	~Schema() = default;
 
 	// Columns are added in an order, for tuple serialization and deserialization
-	void AddColumn(const std::string& name, ColumnType type, bool is_primary) {
+	void AddColumn(const std::string& name, ColumnType type, bool is_primary, size_t ordinal_position) {
 		if (column_name_to_index_.find(name) != column_name_to_index_.end()) {
 			throw std::invalid_argument("Column with name '" + name + "' already exists in the schema.");
 		}
-		columns_.emplace_back(name, type, is_primary);
+		columns_.emplace_back(name, type, is_primary, ordinal_position);
 		column_name_to_index_[name] = columns_.size() - 1;
 	}
 

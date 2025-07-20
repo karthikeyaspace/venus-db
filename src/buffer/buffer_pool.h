@@ -45,7 +45,7 @@ namespace buffer {
 	class BufferPoolManager {
 	public:
 		BufferPoolManager(storage::DiskManager* disk_manager)
-		    : pool_size_(BUFFER_POOL_SIZE) // no. of pages
+		    : pool_size_(MAX_BUFFER_POOL_SIZE) // no. of pages
 		    , disk_manager_(disk_manager) { };
 
 		~BufferPoolManager();
@@ -53,7 +53,9 @@ namespace buffer {
 		Page* FetchPage(page_id_t page_id);
 		bool SetDirtyPage(page_id_t page_id, bool is_dirty);
 		bool FlushPage(page_id_t page_id);
+		bool FlushAllPages();
 		Page* NewPage();
+		Page* NewPage(page_id_t page_id);  // Create page at specific ID (for system tables)
 		bool DeletePage(page_id_t page_id);
 
 	private:

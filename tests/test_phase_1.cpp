@@ -28,8 +28,8 @@ void create_database(const std::string& db_name);
 void use_database(const std::string& db_name,
     DiskManager*& disk_manager,
     BufferPoolManager*& buffer_pool_manager);
+void show_databases();
 
-void test_table_disk_scan(BufferPoolManager* bpm, Schema* schema);
 void insert_tuple_interactive(BufferPoolManager* bpm, Schema* schema);
 void table_scan_memory(BufferPoolManager* bpm, Schema* schema);
 void table_scan_from_disk(BufferPoolManager* bpm, Schema* schema);
@@ -51,10 +51,11 @@ int main() {
 		std::cout << std::endl;
 		std::cout << "1: Create Database\n"
 		          << "2: Use Database\n"
-		          << "3: Insert Tuple\n"
-		          << "4: Table Scan (Memory)\n"
-		          << "5: Table Scan (From Disk)\n"
-		          << "6: Exit\n"
+		          << "3: Show Databases\n"
+		          << "4: Insert Tuple\n"
+		          << "5: Table Scan (Memory)\n"
+		          << "6: Table Scan (From Disk)\n"
+		          << "7: Exit\n"
 		          << "Choose an option: ";
 		std::cin >> option;
 
@@ -67,15 +68,18 @@ int main() {
 			use_database(db, disk_manager, buffer_pool_manager);
 			break;
 		case 3:
-			insert_tuple_interactive(buffer_pool_manager, schema);
+			show_databases();
 			break;
 		case 4:
-			table_scan_memory(buffer_pool_manager, schema);
+			insert_tuple_interactive(buffer_pool_manager, schema);
 			break;
 		case 5:
+			table_scan_memory(buffer_pool_manager, schema);
+			break; 
+		case 6:
 			table_scan_from_disk(buffer_pool_manager, schema);
 			break;
-		case 6:
+		case 7:
 			std::cout << "Exiting...\n";
 			delete buffer_pool_manager;
 			delete disk_manager;
@@ -120,12 +124,20 @@ void use_database(const std::string& db_name,
 	std::cout << "Using database: " << db_path << std::endl;
 }
 
+void show_databases() {
+	for (const auto& entry : std::filesystem::directory_iterator(venus::db_dir)) {
+		if (entry.is_regular_file() && entry.path().extension() == ".db") {
+			std::cout << "- " << entry.path().stem().string() << std::endl;
+		}
+	}
+}
+
 Schema* create_test_schema() {
 	Schema* schema = new Schema();
 
-	schema->AddColumn("id", ColumnType::INT, true);
-	schema->AddColumn("name", ColumnType::CHAR, false);
-	schema->AddColumn("score", ColumnType::FLOAT, false);
+	schema->AddColumn("id", ColumnType::INT, true, 0);
+	schema->AddColumn("name", ColumnType::CHAR, false, 1);
+	schema->AddColumn("score", ColumnType::FLOAT, false, 2);
 
 	std::cout << "Schema generated" << std::endl;
 	return schema;
@@ -190,7 +202,6 @@ void insert_tuple(TableHeap* table_heap, const Schema* schema, const std::vector
 	std::vector<const char*> tuple_values;
 	std::vector<std::unique_ptr<char[]>> allocated_data; // To keep track of allocated memory
 
-	// Convert string values to appropriate data types based on schema
 	for (size_t i = 0; i < schema->GetColumnCount(); ++i) {
 		const Column& column = schema->GetColumn(i);
 		const std::string& value_str = values[i];

@@ -17,8 +17,10 @@ include_directories(
     
 file(GLOB_RECURSE SOURCES 
     "${PROJECT_SOURCE_DIR}/storage/*.cpp"
-    "${PROJECT_SOURCE_DIR}/buffer/*.cpp"
+    "${PROJECT_SOURCE_DIR}/buffer/*.cpp" 
     "${PROJECT_SOURCE_DIR}/table/*.cpp"
+    "${PROJECT_SOURCE_DIR}/catalog/*.cpp"
+    "${PROJECT_SOURCE_DIR}/database/*.cpp"
     "${PROJECT_SOURCE_DIR}/common/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp"
 )

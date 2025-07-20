@@ -8,7 +8,7 @@ namespace storage {
 	// Using OS file handling
 	DiskManager::DiskManager(const std::string& db_file)
 	    : db_file_name(db_file)
-	    , next_page_id_(0)
+	    , next_page_id_(FIRST_USABLE_PAGE_ID)
 	    , file_size_(0) {
 		db_io_.open(db_file_name, std::ios::in | std::ios::out | std::ios::binary);
 		if (!db_io_) {
