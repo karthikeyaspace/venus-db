@@ -26,6 +26,7 @@
 #pragma once
 
 #include "buffer/buffer_pool.h"
+#include "catalog/schema.h"
 #include "storage/page.h"
 #include "storage/tuple.h"
 
@@ -44,6 +45,8 @@ namespace table {
 		~TableHeap() = default;
 
 		bool InsertTuple(const Tuple& tuple, RID* rid);
+
+		bool InsertTuple(const std::vector<std::string>& values);
 
 		// It marks the tuple as deleted -> basically unpins so lru can replace it later with needed and slot.is_live to false
 		// Actual deletion happens in a seperate process on a background thread

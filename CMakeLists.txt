@@ -22,7 +22,7 @@ file(GLOB_RECURSE SOURCES
     "${PROJECT_SOURCE_DIR}/catalog/*.cpp"
     "${PROJECT_SOURCE_DIR}/database/*.cpp"
     "${PROJECT_SOURCE_DIR}/common/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp"
+    "${PROJECT_SOURCE_DIR}/main.cpp"
 )
 
 add_executable(venus

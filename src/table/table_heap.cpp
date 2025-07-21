@@ -93,6 +93,56 @@ namespace table {
 		return true;
 	}
 
+	bool TableHeap::InsertTuple(const std::vector<std::string>& values) {
+		if (values.size() != schema_->GetColumnCount()) {
+			return false;
+		}
+
+		// size of tuple to store in page
+		uint32_t total_size = sizeof(uint32_t);
+		for (size_t i = 0; i < schema_->GetColumnCount(); ++i) {
+			total_size += schema_->GetColumn(i).GetLength();
+		}
+
+		std::vector<char> tuple_data(total_size);
+
+		// size header
+		*reinterpret_cast<uint32_t*>(tuple_data.data()) = total_size;
+
+		char* data_ptr = tuple_data.data() + sizeof(uint32_t);
+		for (size_t i = 0; i < schema_->GetColumnCount(); ++i) {
+			const Column& column = schema_->GetColumn(i);
+			const std::string& value_str = values[i];
+
+			switch (column.GetType()) {
+			case ColumnType::INT: {
+				int int_value = std::stoi(value_str);
+				std::memcpy(data_ptr, &int_value, sizeof(int));
+				break;
+			}
+			case ColumnType::FLOAT: {
+				float float_value = std::stof(value_str);
+				std::memcpy(data_ptr, &float_value, sizeof(float));
+				break;
+			}
+			case ColumnType::CHAR: {
+				std::memset(data_ptr, 0, column.GetLength()); // zero fill
+				std::memcpy(data_ptr, value_str.c_str(),
+				    std::min(value_str.length(), static_cast<size_t>(column.GetLength() - 1)));
+				break;
+			}
+			default:
+				return false; 
+			}
+			data_ptr += column.GetLength();
+		}
+
+		Tuple tuple(tuple_data.data(), RID());
+
+		RID rid;
+		return InsertTuple(tuple, &rid);
+	}
+
 	bool TableHeap::DeleteTuple(const RID& rid) {
 		page_id_t page_id = rid.page_id;
 		slot_id_t slot_id = rid.slot_id;
@@ -251,19 +301,19 @@ namespace table {
 		// Move to next valid tuple
 		slot_id_t next_slot_id = current_rid_.slot_id + 1;
 		page_id_t current_page_id = current_rid_.page_id;
-		
+
 		Page* page = table_heap_->bpm_->FetchPage(current_page_id);
 		if (page == nullptr) {
 			current_rid_ = RID(); // Invalid RID to indicate end
 			return *this;
 		}
-		
+
 		// Look for next valid slot in current page
 		while (next_slot_id < page->GetHeader()->num_slots) {
 			SlotDirectory* slot = page->GetSlotDirectory(next_slot_id);
 			if (slot != nullptr && slot->is_live) {
 				current_rid_.slot_id = next_slot_id;
-				
+
 				// Update current_tuple_
 				Tuple* tuple = table_heap_->GetTuple(current_rid_);
 				if (tuple != nullptr) {
@@ -274,7 +324,7 @@ namespace table {
 			}
 			next_slot_id++;
 		}
-		
+
 		// No more valid slots in current page, try next page
 		page_id_t next_page_id = page->GetHeader()->next_page_id;
 		if (next_page_id != INVALID_PAGE_ID) {
@@ -286,7 +336,7 @@ namespace table {
 					if (slot != nullptr && slot->is_live) {
 						current_rid_.page_id = next_page_id;
 						current_rid_.slot_id = slot_id;
-						
+
 						// Update current_tuple_
 						Tuple* tuple = table_heap_->GetTuple(current_rid_);
 						if (tuple != nullptr) {
@@ -298,15 +348,14 @@ namespace table {
 				}
 			}
 		}
-		
+
 		// No more valid tuples
 		current_rid_ = RID(); // Invalid RID to indicate end
 		return *this;
 	}
 
 	bool TableHeap::Iterator::operator==(const Iterator& other) const {
-		return current_rid_.page_id == other.current_rid_.page_id && 
-	       current_rid_.slot_id == other.current_rid_.slot_id;
+		return current_rid_.page_id == other.current_rid_.page_id && current_rid_.slot_id == other.current_rid_.slot_id;
 	}
 
 	bool TableHeap::Iterator::operator!=(const Iterator& other) const {

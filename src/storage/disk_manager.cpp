@@ -15,24 +15,30 @@ namespace storage {
 			db_io_.clear();
 			db_io_.open(db_file_name, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
 		}
+		
+		if (!db_io_.is_open()) {
+			throw std::runtime_error("Failed to open database file: " + db_file);
+		}
+		
 		db_io_.seekg(0, std::ios::end);
 		file_size_ = db_io_.tellg();
 		db_io_.seekg(0, std::ios::beg);
+		db_io_.seekp(0, std::ios::beg);  // put pointer
 		
-		// Calculate next_page_id based on existing file size
+		// first 3 pages (0, 1, 2) are reserved for system tables
 		if (file_size_ > 0) {
-			next_page_id_ = static_cast<page_id_t>(file_size_ / PAGE_SIZE);
+			page_id_t calculated_page_id = static_cast<page_id_t>(file_size_ / PAGE_SIZE);
+			next_page_id_ = std::max(calculated_page_id, FIRST_USABLE_PAGE_ID);
 		}
-	}
-
-	DiskManager::~DiskManager() {
+	}	DiskManager::~DiskManager() {
 		if (db_io_.is_open()) {
 			db_io_.close();
 		}
 	}
 
 	void DiskManager::ReadPage(page_id_t page_id, char* page_data) {
-		if (page_id >= next_page_id_) {
+		// allow reading system pages if not allocated
+		if (page_id >= next_page_id_ && page_id >= FIRST_USABLE_PAGE_ID) {
 			throw std::out_of_range("Page ID out of range");
 		}
 
@@ -44,12 +50,19 @@ namespace storage {
 	}
 
 	void DiskManager::WritePage(page_id_t page_id, const char* page_data) {
-		if (page_id >= next_page_id_) {
+		if (page_id >= next_page_id_ && page_id >= FIRST_USABLE_PAGE_ID) {
 			throw std::out_of_range("Page ID out of range");
 		}
 
 		long long offset = static_cast<long long>(page_id) * PAGE_SIZE;
+		
+		db_io_.clear();  
 		db_io_.seekp(offset);
+		
+		if (!db_io_.good()) {
+			throw std::runtime_error("Failed to seek to write position");
+		}
+		
 		if (!db_io_.write(page_data, PAGE_SIZE)) {
 			throw std::runtime_error("Failed to write page to disk");
 		}

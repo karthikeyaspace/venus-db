@@ -45,7 +45,7 @@ namespace venus {
 namespace database {
 	class DatabaseManager {
 	public:
-		explicit DatabaseManager(const std::string& db_path);
+		DatabaseManager();
 
 		~DatabaseManager();
 
@@ -58,6 +58,7 @@ namespace database {
 
 		void FlushAllPages();
 		void Close();
+		void Start();
 
 	private:
 		std::string db_path_;
@@ -67,7 +68,7 @@ namespace database {
 		buffer::BufferPoolManager* bpm_;
 		catalog::CatalogManager* catalog_;
 
-		void Initialize();
+		void Initialize(const std::string &db_path);
 		void Cleanup();
 
 		DISALLOW_COPY_AND_MOVE(DatabaseManager);

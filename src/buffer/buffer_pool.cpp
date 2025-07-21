@@ -90,6 +90,19 @@ namespace buffer {
 		return true;
 	}
 
+	bool BufferPoolManager::FlushAllPages() {
+		for (auto& pair : pages_) {
+			page_id_t page_id = pair.first;
+			Page* page = pair.second;
+			
+			if (page->IsDirty()) {
+				disk_manager_->WritePage(page_id, page->GetData());
+				page->SetDirty(false);
+			}
+		}
+		return true;
+	}
+
 	Page* BufferPoolManager::NewPage() {
 		page_id_t new_page_id = disk_manager_->AllocatePage();
 		Page* new_page = new Page(new char[PAGE_SIZE]);

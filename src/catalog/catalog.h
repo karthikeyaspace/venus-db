@@ -55,6 +55,7 @@
 #include "catalog/schema.h"
 #include "common/config.h"
 #include "table/table_heap.h"
+#include "storage/tuple.h"
 
 namespace venus {
 namespace catalog {
@@ -69,6 +70,8 @@ namespace catalog {
 
 		bool TableExists(const std::string& table_name);
 		std::vector<std::string> GetAllTables();
+
+		void ShowMasterTables();
 
 	private:
 		buffer::BufferPoolManager* bpm_;
@@ -88,6 +91,8 @@ namespace catalog {
 
 		table_id_t GetNextTableId();
 		column_id_t GetNextColumnId();
+		
+		std::string GetValueAsString(const Tuple& tuple, uint32_t column_idx, const Schema* schema) const;
 	};
 }
 }
