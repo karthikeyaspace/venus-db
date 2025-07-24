@@ -21,6 +21,7 @@ file(GLOB_RECURSE SOURCES
     "${PROJECT_SOURCE_DIR}/table/*.cpp"
     "${PROJECT_SOURCE_DIR}/catalog/*.cpp"
     "${PROJECT_SOURCE_DIR}/database/*.cpp"
+    "${PROJECT_SOURCE_DIR}/executor/*.cpp"
     "${PROJECT_SOURCE_DIR}/common/*.cpp"
     "${PROJECT_SOURCE_DIR}/main.cpp"
 )

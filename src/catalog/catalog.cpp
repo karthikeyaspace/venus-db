@@ -37,7 +37,6 @@ namespace catalog {
 	    , master_tables_schema_(GetMasterTableSchema())
 	    , master_columns_schema_(GetMasterColumnSchema()) {
 		InitializeSystemTables();
-		LoadMaxIds();
 	}
 
 	CatalogManager::~CatalogManager() {
@@ -50,9 +49,16 @@ namespace catalog {
 
 		if (tables_page == nullptr) {
 			CreateNewSystemTables();
+			// next table and column IDs are initialized in constructor
 		} else {
 			tables_table_ = new table::TableHeap(bpm_, master_tables_schema_, MASTER_TABLES_PAGE_ID);
 			columns_table_ = new table::TableHeap(bpm_, master_columns_schema_, MASTER_COLUMNS_PAGE_ID);
+			if (tables_table_ == nullptr || columns_table_ == nullptr) {
+				throw std::runtime_error("Failed to initialize system tables.");
+			}
+
+			// obtain next table and column IDs from existing tables
+			LoadMaxIds();
 		}
 	}
 
@@ -158,62 +164,25 @@ namespace catalog {
 	}
 
 	table_id_t CatalogManager::GetNextTableId() {
-		return next_table_id_++; // Return current and increment
+		return next_table_id_++;
 	}
 
 	column_id_t CatalogManager::GetNextColumnId() {
-		return next_column_id_++; // Return current and increment
+		return next_column_id_++;
 	}
 
 	void CatalogManager::LoadMaxIds() {
-		std::cout << "LoadMaxIds: Starting to load max IDs..." << std::endl;
-
-		// finding hightest table_id
 		int table_count = 0;
 		for (auto it = tables_table_->begin(); it != tables_table_->end(); ++it) {
-			const Tuple& tuple = *it;
-			const char* value = tuple.GetValue(0, master_tables_schema_);
-			std::cout << "LoadMaxIds: Found table_id value: '" << (value ? value : "NULL") << "'" << std::endl;
-
-			if (value && strlen(value) > 0) {
-				try {
-					table_id_t current_id = std::stoi(std::string(value));
-					std::cout << "LoadMaxIds: Parsed table_id: " << current_id << std::endl;
-					if (current_id >= next_table_id_) {
-						next_table_id_ = current_id + 1;
-					}
-				} catch (const std::exception& e) {
-					std::cout << "LoadMaxIds: Error parsing table_id '" << value << "': " << e.what() << std::endl;
-				}
-			}
 			table_count++;
 		}
-		std::cout << "LoadMaxIds: Processed " << table_count << " tables" << std::endl;
 
-		// finding highest column_id
 		int column_count = 0;
 		for (auto it = columns_table_->begin(); it != columns_table_->end(); ++it) {
-			const Tuple& tuple = *it;
-			const char* value = tuple.GetValue(0, master_columns_schema_);
-			std::cout << "LoadMaxIds: Found column_id value: '" << (value ? value : "NULL") << "'" << std::endl;
-
-			if (value && strlen(value) > 0) {
-				try {
-					column_id_t current_id = std::stoi(std::string(value));
-					std::cout << "LoadMaxIds: Parsed column_id: " << current_id << std::endl;
-					if (current_id >= next_column_id_) {
-						next_column_id_ = current_id + 1;
-					}
-				} catch (const std::exception& e) {
-					std::cout << "LoadMaxIds: Error parsing column_id '" << value << "': " << e.what() << std::endl;
-				}
-			}
 			column_count++;
 		}
-		std::cout << "LoadMaxIds: Processed " << column_count << " columns" << std::endl;
-
-		std::cout << "CatalogManager: Loaded max IDs - next_table_id: " << next_table_id_
-		          << ", next_column_id: " << next_column_id_ << std::endl;
+		next_table_id_ = table_count;
+		next_column_id_ = column_count;
 	}
 
 	void CatalogManager::InsertSystemTableColumns() {
@@ -258,10 +227,6 @@ namespace catalog {
 	}
 
 	void CatalogManager::ShowMasterTables() {
-		std::cout << "ShowMasterTables: Starting to display system tables..." << std::endl;
-		std::cout << "ShowMasterTables: tables_table_ = " << (tables_table_ ? "valid" : "null") << std::endl;
-		std::cout << "ShowMasterTables: columns_table_ = " << (columns_table_ ? "valid" : "null") << std::endl;
-
 		std::cout << "=== MASTER_TABLES ===" << std::endl;
 		std::cout
 		    << "table_id | table_name | num_columns | first_page_id | primary_key" << std::endl;

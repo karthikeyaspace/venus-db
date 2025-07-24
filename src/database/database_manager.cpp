@@ -4,6 +4,7 @@
 #include "buffer/buffer_pool.h"
 #include "catalog/catalog.h"
 #include "common/config.h"
+#include "executor/executor.h"
 #include "storage/disk_manager.h"
 
 #include <filesystem>
@@ -14,13 +15,15 @@ using namespace venus::database;
 using namespace venus::storage;
 using namespace venus::buffer;
 using namespace venus::catalog;
+using namespace venus::executor;
 
 DatabaseManager::DatabaseManager()
     : db_path_("")
     , is_open_(false)
     , disk_manager_(nullptr)
     , bpm_(nullptr)
-    , catalog_(nullptr) { }
+    , catalog_(nullptr)
+    , executor_(nullptr) { }
 
 DatabaseManager::~DatabaseManager() {
 	if (is_open_) {
@@ -51,6 +54,11 @@ void DatabaseManager::Initialize(const std::string& db_name) {
 	catalog_ = new CatalogManager(bpm_);
 	if (!catalog_) {
 		throw std::runtime_error("Failed to create CatalogManager");
+	}
+
+	executor_ = new ExecutionEngine(bpm_, catalog_);
+	if (!executor_) {
+		throw std::runtime_error("Failed to create ExecutionEngine");
 	}
 
 	std::cout << "DatabaseManager: Database initialized successfully" << std::endl;
@@ -91,35 +99,44 @@ void drop_database(const std::string& db_name) {
 }
 
 void DatabaseManager::Start() {
-	// Simulate REPL
+	// Database Management REPL
 	while (true) {
 		int option;
 		std::cout << std::endl;
-		std::cout << "1: Create Database\n"
-		          << "2: Use Database\n"
-		          << "3: Show Databases\n"
-		          << "4: Drop Database\n"
-		          << "5: Show master tables\n" // both master_tables and master_columns
-		          << "6: CREATE\n"
-		          << "7: INSERT\n"
-		          << "8: SELECT\n"
-		          << "Choose an option: ";
+		std::cout << "=== Venus DB Management Interface ===" << std::endl;
+		std::cout << "1: Create Database" << std::endl;
+		std::cout << "2: Use Database" << std::endl;
+		std::cout << "3: Show Databases" << std::endl;
+		std::cout << "4: Drop Database" << std::endl;
+		std::cout << "5: Execute Query (requires open database)" << std::endl;
+		std::cout << "6: Show Master Tables (requires open database)" << std::endl;
+		std::cout << "0: Exit" << std::endl;
+		std::cout << "Choose an option: ";
+
 		std::cin >> option;
+		std::cout << std::endl;
 
 		switch (option) {
+		case 0:
+			std::cout << "Exiting Venus DB..." << std::endl;
+			return;
 		case 1: {
 			std::string db_name;
 			std::cout << "Enter database name: ";
 			std::cin >> db_name;
-			std::cout << "\n\n";
+			std::cout << std::endl;
 
-			create_database(db_name);
+			try {
+				create_database(db_name);
+			} catch (const std::exception& e) {
+				std::cerr << "Error creating database: " << e.what() << std::endl;
+			}
 		} break;
 		case 2: {
 			std::string db_name;
 			std::cout << "Enter database name: ";
 			std::cin >> db_name;
-			std::cout << "\n\n";
+			std::cout << std::endl;
 
 			try {
 				Initialize(db_name);
@@ -134,28 +151,48 @@ void DatabaseManager::Start() {
 			break;
 		case 4: {
 			std::string db_name;
-			std::cout << "Enter database name:";
+			std::cout << "Enter database name: ";
 			std::cin >> db_name;
-			std::cout << "\n\n";
+			std::cout << std::endl;
 
-			drop_database(db_name);
+			try {
+				drop_database(db_name);
+			} catch (const std::exception& e) {
+				std::cerr << "Error dropping database: " << e.what() << std::endl;
+			}
 		} break;
-
 		case 5: {
-			std::cout << "\n\n";
 			if (!is_open_) {
-				std::cerr << "Database is not initialized" << std::endl;
+				std::cerr << "No database is currently open. Please use option 2 to open a database first." << std::endl;
+				break;
+			}
+			std::string query;
+			std::cout << "> ";
+			std::cin.ignore(); // Clear the newline left by previous cin >>
+			std::getline(std::cin, query);
+			executor_->ExecuteQuery(query);
+		} break;
+		case 6: {
+			if (!is_open_) {
+				std::cerr << "No database is currently open. Please use option 2 to open a database first." << std::endl;
 				break;
 			}
 			catalog_->ShowMasterTables();
 		} break;
-		}
-
 		
+	default:
+		std::cout << "Invalid option. Please try again." << std::endl;
+		break;
 	}
+}
 }
 
 void DatabaseManager::Cleanup() {
+	if (executor_) {
+		delete executor_;
+		executor_ = nullptr;
+	}
+
 	if (catalog_) {
 		delete catalog_;
 		catalog_ = nullptr;
