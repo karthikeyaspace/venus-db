@@ -33,6 +33,7 @@
 #include <cstring>
 
 #include "common/config.h"
+#include "common/types.h"
 #include "storage/tuple.h"
 
 namespace venus {

@@ -27,6 +27,7 @@
 
 #include "buffer/buffer_pool.h"
 #include "catalog/schema.h"
+#include "common/types.h"
 #include "storage/page.h"
 #include "storage/tuple.h"
 

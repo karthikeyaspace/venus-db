@@ -40,21 +40,6 @@ constexpr const char* MASTER_TABLES_NAME = "master_tables";
 constexpr const char* MASTER_COLUMNS_NAME = "master_columns";
 constexpr const char* MASTER_INDEXES_NAME = "master_indexes";
 
-enum class PageType : uint8_t {
-	INVALID_PAGE = 0,
-	TABLE_PAGE, // regular data page
-	INDEX_LEAF_PAGE,
-	INDEX_INTERNAL_PAGE,
-	CATALOG_PAGE,
-};
-
-enum class ColumnType : uint8_t {
-	INVALID_COLUMN = 0,
-	INT,
-	FLOAT,
-	CHAR
-};
-
 // macros
 
 #define LOG(msg)                                   \

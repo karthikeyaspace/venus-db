@@ -22,8 +22,23 @@ DatabaseManager::DatabaseManager()
     , is_open_(false)
     , disk_manager_(nullptr)
     , bpm_(nullptr)
-    , catalog_(nullptr)
-    , executor_(nullptr) { }
+    , catalog_(nullptr) {
+	executor_ = new ExecutionEngine();
+	if (!executor_) {
+		throw std::runtime_error("Database Error: Failed to create ExecutionEngine");
+	}
+	executor_->InitializeCallback(
+	    [this](const std::string& db_name) {
+		    this->Initialize(db_name);
+	    });
+
+	executor_->SetStopDBCallback(
+	    [this]() {
+		    if (is_open_) {
+			    this->Close();
+		    }
+	    });
+}
 
 DatabaseManager::~DatabaseManager() {
 	if (is_open_) {
@@ -34,6 +49,10 @@ DatabaseManager::~DatabaseManager() {
 void DatabaseManager::Initialize(const std::string& db_name) {
 	if (db_name.empty()) {
 		throw std::invalid_argument("Database name cannot be empty");
+	}
+
+	if (is_open_) {
+		Close();
 	}
 
 	// Build full path: db_dir + "/" + db_name + ".db"
@@ -56,12 +75,14 @@ void DatabaseManager::Initialize(const std::string& db_name) {
 		throw std::runtime_error("Failed to create CatalogManager");
 	}
 
-	executor_ = new ExecutionEngine(bpm_, catalog_);
 	if (!executor_) {
-		throw std::runtime_error("Failed to create ExecutionEngine");
+		throw std::runtime_error("ExecutionEngine is not initialized");
 	}
 
-	std::cout << "DatabaseManager: Database initialized successfully" << std::endl;
+	executor_->SetLocalContext(bpm_, catalog_);
+
+	is_open_ = true;
+	std::cout << "DatabaseManager: Database '" << db_name << "' opened successfully" << std::endl;
 }
 
 void create_database(const std::string& db_name) {
@@ -99,92 +120,7 @@ void drop_database(const std::string& db_name) {
 }
 
 void DatabaseManager::Start() {
-	// Database Management REPL
-	while (true) {
-		int option;
-		std::cout << std::endl;
-		std::cout << "=== Venus DB Management Interface ===" << std::endl;
-		std::cout << "1: Create Database" << std::endl;
-		std::cout << "2: Use Database" << std::endl;
-		std::cout << "3: Show Databases" << std::endl;
-		std::cout << "4: Drop Database" << std::endl;
-		std::cout << "5: Execute Query (requires open database)" << std::endl;
-		std::cout << "6: Show Master Tables (requires open database)" << std::endl;
-		std::cout << "0: Exit" << std::endl;
-		std::cout << "Choose an option: ";
-
-		std::cin >> option;
-		std::cout << std::endl;
-
-		switch (option) {
-		case 0:
-			std::cout << "Exiting Venus DB..." << std::endl;
-			return;
-		case 1: {
-			std::string db_name;
-			std::cout << "Enter database name: ";
-			std::cin >> db_name;
-			std::cout << std::endl;
-
-			try {
-				create_database(db_name);
-			} catch (const std::exception& e) {
-				std::cerr << "Error creating database: " << e.what() << std::endl;
-			}
-		} break;
-		case 2: {
-			std::string db_name;
-			std::cout << "Enter database name: ";
-			std::cin >> db_name;
-			std::cout << std::endl;
-
-			try {
-				Initialize(db_name);
-				is_open_ = true;
-				std::cout << "Database " << db_name << " is now open." << std::endl;
-			} catch (const std::exception& e) {
-				std::cerr << "Error opening database: " << e.what() << std::endl;
-			}
-		} break;
-		case 3:
-			show_databases();
-			break;
-		case 4: {
-			std::string db_name;
-			std::cout << "Enter database name: ";
-			std::cin >> db_name;
-			std::cout << std::endl;
-
-			try {
-				drop_database(db_name);
-			} catch (const std::exception& e) {
-				std::cerr << "Error dropping database: " << e.what() << std::endl;
-			}
-		} break;
-		case 5: {
-			if (!is_open_) {
-				std::cerr << "No database is currently open. Please use option 2 to open a database first." << std::endl;
-				break;
-			}
-			std::string query;
-			std::cout << "> ";
-			std::cin.ignore(); // Clear the newline left by previous cin >>
-			std::getline(std::cin, query);
-			executor_->ExecuteQuery(query);
-		} break;
-		case 6: {
-			if (!is_open_) {
-				std::cerr << "No database is currently open. Please use option 2 to open a database first." << std::endl;
-				break;
-			}
-			catalog_->ShowMasterTables();
-		} break;
-		
-	default:
-		std::cout << "Invalid option. Please try again." << std::endl;
-		break;
-	}
-}
+	executor_->StartRepl();
 }
 
 void DatabaseManager::Cleanup() {

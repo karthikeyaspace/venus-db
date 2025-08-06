@@ -35,8 +35,9 @@
  * - Support for parallel execution where applicable
  * - Resource management and cleanup
  *
- * ExecutionEngine owns the REPL interface and coordinates query execution
+ * ExecutionEngine owns the REPL interface and coordinates query execution among parser, planner, and various executors
  * Will integrate with parser and planner once they are implemented
+ *
  */
 
 #pragma once
@@ -46,6 +47,8 @@
 #include "catalog/schema.h"
 #include "common/config.h"
 #include "table/table_heap.h"
+
+#include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -58,17 +61,31 @@ namespace venus {
 namespace executor {
 	class ExecutionEngine {
 	public:
-		ExecutionEngine(BufferPoolManager* bpm, CatalogManager* catalog)
-		    : bpm_(bpm)
-		    , catalog_(catalog) { }
+		~ExecutionEngine();
 
-		~ExecutionEngine() = default;
+		void InitializeCallback(std::function<void(const std::string&)> cb) {
+			init_callback_ = std::move(cb);
+		}
 
-		void ExecuteQuery(const std::string& query);
+		void SetLocalContext(BufferPoolManager* bpm,
+		    CatalogManager* catalog) {
+			bpm_ = bpm;
+			catalog_ = catalog;
+		}
+
+		void SetStopDBCallback(std::function<void()> cb) {
+			stop_db_callback_ = std::move(cb);
+		}
+
+		void execute(const std::string& query);
+		void StartRepl();
 
 	private:
-		BufferPoolManager* bpm_;
-		CatalogManager* catalog_;
+		BufferPoolManager* bpm_ = nullptr;
+		CatalogManager* catalog_ = nullptr;
+
+		std::function<void(const std::string&)> init_callback_;
+		std::function<void()> stop_db_callback_;
 	};
-}
-}
+} // namespace executor
+} // namespace venus

@@ -73,7 +73,7 @@ namespace database {
 		catalog::CatalogManager* catalog_;
 		executor::ExecutionEngine* executor_;
 
-		void Initialize(const std::string &db_path);
+		void Initialize(const std::string& db_path);
 		void Cleanup();
 
 		DISALLOW_COPY_AND_MOVE(DatabaseManager);

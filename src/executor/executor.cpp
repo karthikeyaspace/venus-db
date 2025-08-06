@@ -1,16 +1,54 @@
 // /src/executor/executor.cpp
 
 #include "executor/executor.h"
-#include "table/table_heap.h"
+#include "parser/parser.h"
+
 #include <iostream>
 #include <sstream>
 
+#include "table/table_heap.h"
+
+using namespace venus::parser;
+
 namespace venus {
 namespace executor {
-	void ExecutionEngine::ExecuteQuery(const std::string& query) {
-        // Query path
-        // parser -> planner -> optimizer -> executor
-        std::cout << "Executing query: " << query << std::endl;
+
+	ExecutionEngine::~ExecutionEngine() {
+		if (stop_db_callback_) {
+			stop_db_callback_();
+		}
 	}
-}
-}
+
+	void ExecutionEngine::execute(const std::string& query) {
+		try {
+			Parser parser;
+			auto ast = parser.parse(query);
+
+			std::cout << "Parsed AST Node Type: " << static_cast<int>(ast->type) << std::endl;
+		} catch (const std::exception& e) {
+			std::cout << "Error: " << e.what() << std::endl;
+		}
+	}
+
+	void ExecutionEngine::StartRepl() {
+		std::cout << "===== Venus DB =====" << std::endl;
+
+		std::string query;
+		while (true) {
+			std::cout << std::endl;
+			std::cout << "venus> ";
+			std::getline(std::cin, query);
+
+			if (query == "exit" || query == "quit") {
+				stop_db_callback_();
+				break;
+			}
+
+			if (query.empty())
+				continue;
+
+			execute(query);
+		}
+	}
+} // namespace executor
+} // namespace venus

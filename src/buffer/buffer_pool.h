@@ -34,6 +34,7 @@
 #pragma once
 
 #include "common/config.h"
+#include "common/types.h"
 #include "storage/disk_manager.h"
 #include "storage/page.h"
 

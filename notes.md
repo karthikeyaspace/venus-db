@@ -16,15 +16,6 @@ This is inspired by 2 people: 1. Sir Arpit Bhayani, 2. Prof. Andy Pavlo
 - No Views, concurrency, ACID compliance, db auth
 
 
-## Supporting Commands
-- CREATE/DROP/USE/SHOW DATABASE
-- CREATE/DROP/SHOW TABLE(s)
-- SELECT/INSERT on table
-- UPDATE/DELETE on table
-- CREATE/DROP/SHOW INDEX
-- HELP/EXIT/EXEC
-
-
 ## Components
 - Parser, Query Executor, Query Optimizer(Heuristic) - Interpreter
 - API 
@@ -152,3 +143,42 @@ todo:
 - sort out tuple insertion logic
 - add more error handling
 - make 2nd phase test with catalog, bpm, dm, table heap, db manager
+
+
+### Queries to be supported by Venus DB
+1. SHOW DATABASES
+   DROP <db_name>
+   USE <db_name>
+   CREATE DATABASE <db_name>
+  
+2. CREATE TABLE <table_name> ( 
+    col_name col_type primary_key,
+    col_name col_type,
+    col_name col_type,
+   )
+
+   DROP TABLE <table_name>
+   SHOW TABLES;
+
+3. SELECT * FROM <table_name>
+   SELECT col_name,.. FROM <table_name>
+   SELECT col_name,.. FROM <table_name> WHERE condition;
+   SELECT col_name,.. FROM <table_name> JOIN <table_name2> ON condition;
+   SELECT col_name,.. FROM <table_name> WHERE condition ORDER BY col_name;
+   SELECT col_name,.. FROM <table_name> WHERE condition LIMIT n;
+   SELECT col_name,.. FROM <table_name> WHERE condition GROUP BY col_name;
+
+   INSERT INTO <table_name> VALUES (val1, val2,..);
+   INSERT INTO <table_name> (col1, col2,..) VALUES (val1, val2,..), (val3, val4,..);
+
+4. UPDATE <table_name> SET col1 = val1, col2 = val2 WHERE condition;
+   DELETE FROM <table_name> WHERE condition;
+
+5. CREATE INDEX <index_name> ON <table_name> (col_name);
+   DROP INDEX <index_name>;
+
+6. HELP
+   EXIT
+   EXEC <file_name>
+
+   

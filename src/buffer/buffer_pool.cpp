@@ -94,7 +94,7 @@ namespace buffer {
 		for (auto& pair : pages_) {
 			page_id_t page_id = pair.first;
 			Page* page = pair.second;
-			
+
 			if (page->IsDirty()) {
 				disk_manager_->WritePage(page_id, page->GetData());
 				page->SetDirty(false);
@@ -185,5 +185,5 @@ namespace buffer {
 		pages_.clear();
 		lru_list_.clear();
 	}
-}
-}
+} // namespace buffer
+} // namespace venus
