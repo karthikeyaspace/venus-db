@@ -21,8 +21,7 @@ namespace executor {
 
 	void ExecutionEngine::execute(const std::string& query) {
 		try {
-			Parser parser;
-			auto ast = parser.parse(query);
+			auto ast = parser_.parse(query);
 
 			std::cout << "Parsed AST Node Type: " << static_cast<int>(ast->type) << std::endl;
 		} catch (const std::exception& e) {

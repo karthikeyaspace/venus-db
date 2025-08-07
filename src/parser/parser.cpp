@@ -5,32 +5,48 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "parser/ast.h"
 #include "parser/parser.h"
 
 namespace venus {
 namespace parser {
 
-	// Initialize keyword mapping
-	std::unordered_map<std::string, TokenType> Parser::keywords = {
+	std::unordered_map<std::string, TokenType> keywords = {
 		{ "show", TokenType::SHOW },
 		{ "create", TokenType::CREATE },
 		{ "drop", TokenType::DROP },
 		{ "use", TokenType::USE },
 		{ "database", TokenType::DATABASE },
+
 		{ "table", TokenType::TABLE },
 		{ "select", TokenType::SELECT },
 		{ "insert", TokenType::INSERT },
 		{ "update", TokenType::UPDATE },
 		{ "delete", TokenType::DELETE },
+
+		{ "from", TokenType::FROM },
 		{ "into", TokenType::INTO },
 		{ "values", TokenType::VALUES },
-		{ "from", TokenType::FROM },
 		{ "where", TokenType::WHERE },
+
+		{ "primary_key", TokenType::PK },
+		{ "join", TokenType::JOIN },
+		{ "group_by", TokenType::GROUP_BY },
+		{ "having", TokenType::HAVING },
+		{ "order_by", TokenType::ORDER_BY },
+		{ "as", TokenType::AS },
+		{ "on", TokenType::ON },
+		{ "limit", TokenType::LIMIT },
+		{ "offset", TokenType::OFFSET },
+		{ "set", TokenType::SET },
+		{ "index", TokenType::INDEX },
+
 		{ "int", TokenType::INT_TYPE },
 		{ "float", TokenType::FLOAT_TYPE },
 		{ "char", TokenType::CHAR_TYPE },
-		{ "primary_key", TokenType::PK }
+
+		{ "help", TokenType::HELP },
+		{ "exit", TokenType::EXIT },
+		{ "exec", TokenType::EXEC }
 	};
 
 	std::vector<Token> Parser::tokenize(const std::string& query) {
@@ -45,7 +61,6 @@ namespace parser {
 				continue;
 			}
 
-			// Single character tokens
 			if (c == '(') {
 				result.emplace_back(TokenType::LPAREN, "(");
 				i++;
@@ -76,6 +91,16 @@ namespace parser {
 				i++;
 				continue;
 			}
+			if (c == '<') {
+				result.emplace_back(TokenType::LESS_THAN, "<");
+				i++;
+				continue;
+			}
+			if (c == '>') {
+				result.emplace_back(TokenType::GREATER_THAN, ">");
+				i++;
+				continue;
+			}
 			if (c == '+') {
 				result.emplace_back(TokenType::PLUS, "+");
 				i++;
@@ -91,10 +116,15 @@ namespace parser {
 				i++;
 				continue;
 			}
+			if (c == '.') {
+				result.emplace_back(TokenType::DOT, ".");
+				i++;
+				continue;
+			}
 
-			// String literals (single quotes)
+			// String literals (in single quotes - char)
 			if (c == '\'') {
-				size_t start = ++i; // Skip opening quote
+				size_t start = ++i;
 				while (i < query.length() && query[i] != '\'') {
 					i++;
 				}
@@ -103,16 +133,31 @@ namespace parser {
 				}
 				std::string value = query.substr(start, i - start);
 				result.emplace_back(TokenType::LITERAL, value);
-				i++; // Skip closing quote
+				i++;
 				continue;
 			}
 
-			// Numbers
+			// Number literals (integers and floats)
 			if (isDigit(c)) {
 				size_t start = i;
-				while (i < query.length() && (isDigit(query[i]) || query[i] == '.')) {
-					i++;
+				bool has_dot = false;
+
+				while (i < query.length()) {
+					if (isDigit(query[i])) {
+						i++;
+					} else if (query[i] == '.' && !has_dot) {
+						if (i + 1 < query.length() && isDigit(query[i + 1])) {
+							has_dot = true;
+							i++;
+						} else {
+							// not float
+							break;
+						}
+					} else {
+						break;
+					}
 				}
+
 				std::string value = query.substr(start, i - start);
 				result.emplace_back(TokenType::LITERAL, value);
 				continue;
@@ -142,12 +187,21 @@ namespace parser {
 			throw std::runtime_error("Unexpected character: " + std::string(1, c));
 		}
 
-		result.emplace_back(TokenType::END, "");
+		result.emplace_back(TokenType::END, "END");
 		return result;
 	}
 
 	std::unique_ptr<ASTNode> Parser::parse(const std::string& query) {
 		tokens = tokenize(query);
+
+		// Debug: console all tokens
+		std::cout << "=== TOKENIZATION RESULT ===" << std::endl;
+		for (const auto& token : tokens) {
+			std::cout << "Token Type: " << static_cast<int>(token.type)
+			          << ", Value: '" << token.value << "'" << std::endl;
+		}
+		std::cout << "===========================" << std::endl;
+
 		current_token = 0;
 
 		if (tokens.empty() || (tokens.size() == 1 && tokens[0].type == TokenType::END)) {
@@ -161,7 +215,7 @@ namespace parser {
 				return std::make_unique<CreateDatabaseNode>(db_name);
 			}
 
-			throw std::runtime_error("Not implemented error");
+			throw std::runtime_error("Only CREATE DATABASE supported currently");
 		}
 
 		if (match(TokenType::USE)) {
@@ -187,14 +241,22 @@ namespace parser {
 		}
 
 		if (match(TokenType::SELECT)) {
-			consume(TokenType::STAR, "Only SELECT * supported for now");
-			consume(TokenType::FROM, "Expected FROM after SELECT *");
+			// For now, just parse simple SELECT queries
+			// This will need to be expanded to handle JOINs properly
+
+			// Skip column list for now (assume SELECT *)
+			while (!check(TokenType::FROM) && !isAtEnd()) {
+				advance();
+			}
+
+			consume(TokenType::FROM, "Expected FROM after SELECT");
 			std::string table_name = currentToken().value;
 			consume(TokenType::IDENTIFIER, "Expected table name after FROM");
+
+			// Skip the rest for now (including JOIN clauses)
 			return std::make_unique<SelectNode>(table_name);
 		}
 
-		std::cout << "Not implemented" << std::endl;
 		throw std::runtime_error("Unknown statement type");
 	}
 

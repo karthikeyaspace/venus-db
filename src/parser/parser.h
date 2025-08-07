@@ -60,16 +60,12 @@ namespace parser {
 		std::vector<Token> tokens;
 		size_t current_token = 0;
 
-		// Keyword mapping
-		static std::unordered_map<std::string, TokenType> keywords;
-
 		// Lexer
 		std::vector<Token> tokenize(const std::string& query);
 		bool isAlpha(char c);
 		bool isDigit(char c);
 		bool isAlphaNumeric(char c);
 
-		// Parser utilities
 		Token& currentToken();
 		Token& peekToken(size_t offset = 1);
 		bool isAtEnd();

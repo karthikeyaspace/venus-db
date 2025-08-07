@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <limits>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace venus {
@@ -32,6 +33,7 @@ enum class TokenType : uint8_t {
 	DROP,
 	USE,
 	DATABASE,
+
 	TABLE,
 
 	SELECT,
@@ -43,36 +45,50 @@ enum class TokenType : uint8_t {
 	VALUES,
 	FROM,
 	PK,
+
 	IDENTIFIER, // table or column name
 
 	WHERE,
+	STAR,
 	JOIN,
 	GROUP_BY,
 	HAVING,
 	ORDER_BY,
 	AS,
+	ON,
+	LIMIT,
+	OFFSET,
+	SET,
+	INDEX,
 
 	// operators
 	PLUS,
 	MINUS,
 	MULTIPLY,
 	DIVIDE,
+	EQUALS,
+	NOT_EQUALS,
+	GREATER_THAN,
+	LESS_THAN,
 
 	// types
 	INT_TYPE,
 	FLOAT_TYPE,
 	CHAR_TYPE,
 
-	LITERAL, // string or number literals
+	LITERAL, // string or number values
 
+	// delimiters
 	COMMA,
-	STAR,
-	EQUALS,
-	NOT_EQUALS,
 	SEMICOLON,
 	LPAREN,
 	RPAREN,
+	DOT,
 	END,
+
+	HELP,
+	EXIT,
+	EXEC
 };
 
 // AST types

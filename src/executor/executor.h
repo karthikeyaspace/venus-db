@@ -47,6 +47,7 @@
 #include "catalog/schema.h"
 #include "common/config.h"
 #include "table/table_heap.h"
+#include "parser/parser.h"
 
 #include <functional>
 #include <iostream>
@@ -56,6 +57,7 @@
 using namespace venus::catalog;
 using namespace venus::buffer;
 using namespace venus::table;
+using namespace venus::parser;
 
 namespace venus {
 namespace executor {
@@ -83,6 +85,8 @@ namespace executor {
 	private:
 		BufferPoolManager* bpm_ = nullptr;
 		CatalogManager* catalog_ = nullptr;
+
+		Parser parser_;
 
 		std::function<void(const std::string&)> init_callback_;
 		std::function<void()> stop_db_callback_;

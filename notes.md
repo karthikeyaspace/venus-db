@@ -158,7 +158,7 @@ todo:
    )
 
    DROP TABLE <table_name>
-   SHOW TABLES;
+   SHOW TABLE;
 
 3. SELECT * FROM <table_name>
    SELECT col_name,.. FROM <table_name>
