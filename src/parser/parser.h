@@ -13,11 +13,13 @@
  *
  * For venus db, Lexer, Parser, and Binder are implemented in Parser class.
  *
- * Some commands supported by venus db:
- * - CREATE/USE/DROP DATABASE
- * - CREATE TABLE
- * - INSERT INTO
- * - SELECT
+ *
+ * In traditional databases, a parser generates a AST tree
+ * AST tree is a hierarchical representation of the abstract syntactic structure of the source code.
+ * Each node of the tree represents a construct occurring in the source code.
+ * It is then sent to the binder for semantic analysis, then to the query planner for execution planning.
+ *
+ *
  */
 
 #pragma once
@@ -26,12 +28,12 @@
 #include "common/types.h"
 #include "parser/ast.h"
 
+#include "ast.h"
 #include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "ast.h"
 
 namespace venus {
 namespace parser {
@@ -73,6 +75,7 @@ namespace parser {
 		bool match(TokenType type);
 		Token advance();
 		void consume(TokenType type, const std::string& message);
+		void invalidToken(const std::string &msg);
 
 		DISALLOW_COPY_AND_MOVE(Parser);
 	};

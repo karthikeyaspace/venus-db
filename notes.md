@@ -136,21 +136,16 @@ DatabaseEngine
 - overflow_error
 
 
-
-todo:
-- remake draw io, incl database mgr, network mgr, 
-- sort out catalog manager
-- sort out tuple insertion logic
-- add more error handling
-- make 2nd phase test with catalog, bpm, dm, table heap, db manager
-
-
 ### Queries to be supported by Venus DB
+
+For sql grammer - https://forcedotcom.github.io/phoenix/
+
 1. SHOW DATABASES
    DROP <db_name>
    USE <db_name>
    CREATE DATABASE <db_name>
-  
+   CREATE DATABASE IF NOT EXISTS <db_name>
+
 2. CREATE TABLE <table_name> ( 
     col_name col_type primary_key,
     col_name col_type,

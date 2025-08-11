@@ -7,6 +7,12 @@
 
 #include "parser/parser.h"
 
+/**
+ * Know parser issues
+ * - UNARY MINUS eg: -42
+ * - float eg: .5
+ */
+
 namespace venus {
 namespace parser {
 
@@ -77,7 +83,7 @@ namespace parser {
 				continue;
 			}
 			if (c == '*') {
-				result.emplace_back(TokenType::STAR, "*");
+				result.emplace_back(TokenType::ASTERISK, "*");
 				i++;
 				continue;
 			}
@@ -191,73 +197,230 @@ namespace parser {
 		return result;
 	}
 
+	// Return AST
 	std::unique_ptr<ASTNode> Parser::parse(const std::string& query) {
 		tokens = tokenize(query);
-
-		// Debug: console all tokens
-		std::cout << "=== TOKENIZATION RESULT ===" << std::endl;
-		for (const auto& token : tokens) {
-			std::cout << "Token Type: " << static_cast<int>(token.type)
-			          << ", Value: '" << token.value << "'" << std::endl;
-		}
-		std::cout << "===========================" << std::endl;
 
 		current_token = 0;
 
 		if (tokens.empty() || (tokens.size() == 1 && tokens[0].type == TokenType::END)) {
-			throw std::runtime_error("Empty query");
+			throw std::runtime_error("Query is empty!");
 		}
 
-		if (match(TokenType::CREATE)) {
-			if (match(TokenType::DATABASE)) {
-				std::string db_name = currentToken().value;
-				consume(TokenType::IDENTIFIER, "Expected database name");
-				return std::make_unique<CreateDatabaseNode>(db_name);
-			}
+		// walk through the tokens, check grammer, create ast
+		Token& first_token = currentToken();
 
-			throw std::runtime_error("Only CREATE DATABASE supported currently");
-		}
-
-		if (match(TokenType::USE)) {
-			std::string db_name = currentToken().value;
-			consume(TokenType::IDENTIFIER, "Expected database name after USE");
-			return std::make_unique<UseDatabaseNode>(db_name);
-		}
-
-		if (match(TokenType::SHOW)) {
-			if (match(TokenType::DATABASE)) {
-				return std::make_unique<ShowDatabasesNode>();
-			}
-			throw std::runtime_error("Only SHOW DATABASES supported currently");
-		}
-
-		if (match(TokenType::DROP)) {
-			if (match(TokenType::DATABASE)) {
-				std::string db_name = currentToken().value;
-				consume(TokenType::IDENTIFIER, "Expected database name after DROP DATABASE");
-				return std::make_unique<DropDatabaseNode>(db_name);
-			}
-			throw std::runtime_error("Only DROP DATABASE supported currently");
-		}
-
-		if (match(TokenType::SELECT)) {
-			// For now, just parse simple SELECT queries
-			// This will need to be expanded to handle JOINs properly
-
-			// Skip column list for now (assume SELECT *)
-			while (!check(TokenType::FROM) && !isAtEnd()) {
+		switch (first_token.type) {
+		case TokenType::SHOW: {
+			advance();
+			if (check(TokenType::DATABASE)) {
 				advance();
+				auto root = std::make_unique<ASTNode>(ASTNodeType::SHOW_DATABASES);
+				return root;
+			} else if (check(TokenType::TABLE)) {
+				advance();
+				auto root = std::make_unique<ASTNode>(ASTNodeType::SHOW_TABLES);
+				return root;
+			} else {
+				invalidToken("Expected keywords DATABASE or TABLE");
 			}
-
-			consume(TokenType::FROM, "Expected FROM after SELECT");
-			std::string table_name = currentToken().value;
-			consume(TokenType::IDENTIFIER, "Expected table name after FROM");
-
-			// Skip the rest for now (including JOIN clauses)
-			return std::make_unique<SelectNode>(table_name);
 		}
 
-		throw std::runtime_error("Unknown statement type");
+		case TokenType::USE: {
+			advance();
+			if (check(TokenType::IDENTIFIER)) {
+				std::string db_name = advance().value;
+				auto root = std::make_unique<ASTNode>(ASTNodeType::USE_DATABASE, db_name);
+				return root;
+			} else {
+				invalidToken("Expected database name after USE");
+			}
+		}
+
+		case TokenType::DROP: {
+			advance();
+			if (check(TokenType::DATABASE)) {
+				advance();
+				if (check(TokenType::IDENTIFIER)) {
+					std::string db_name = advance().value;
+					auto root = std::make_unique<ASTNode>(ASTNodeType::DROP_DATABASE, db_name);
+					return root;
+				} else {
+					invalidToken("Expected database name after DROP DATABASE");
+				}
+			} else if (check(TokenType::TABLE)) {
+				advance();
+				if (check(TokenType::IDENTIFIER)) {
+					std::string table_name = advance().value;
+					auto root = std::make_unique<ASTNode>(ASTNodeType::DROP_TABLE, table_name);
+					return root;
+				} else {
+					invalidToken("Expected table name after DROP TABLE");
+				}
+			} else {
+				invalidToken("Expected TABLE or DATABASE after DROP");
+			}
+		}
+
+		case TokenType::CREATE: {
+			// CREATE TABLE <table_name> (col_name col_type constraint)
+			advance();
+			if (check(TokenType::DATABASE)) {
+				advance();
+				if (check(TokenType::IDENTIFIER)) {
+					std::string db_name = advance().value;
+					auto root = std::make_unique<ASTNode>(ASTNodeType::CREATE_DATABASE, db_name);
+					return root;
+				} else {
+					invalidToken("Expected database name after CREATE DATABASE");
+				}
+			} else if (check(TokenType::TABLE)) {
+				advance();
+				if (check(TokenType::IDENTIFIER)) {
+					std::string table_name = advance().value;
+					auto root = std::make_unique<ASTNode>(ASTNodeType::CREATE_TABLE, table_name);
+
+					advance();
+					if (check(TokenType::LPAREN)) {
+						advance();
+						while (!isAtEnd() && !check(TokenType::RPAREN)) {
+							if (check(TokenType::IDENTIFIER)) {
+								std::string col_name = advance().value;
+								advance();
+								if (check(TokenType::INT_TYPE) || check(TokenType::FLOAT_TYPE) || check(TokenType::CHAR_TYPE)) {
+									std::string col_type = advance().value;
+									advance();
+									if (check(TokenType::PK)) {
+										advance();
+										root->children.emplace_back(std::make_unique<ASTNode>(ASTNodeType::COLUMN_DEF, col_name + " " + col_type + " PK"));
+									} else {
+										root->children.emplace_back(std::make_unique<ASTNode>(ASTNodeType::COLUMN_DEF, col_name + " " + col_type));
+									}
+								} else {
+									invalidToken("Expected column type after column name");
+								}
+							}
+							if (check(TokenType::COMMA)) {
+								advance();
+							}
+						}
+						consume(TokenType::RPAREN, "Expected ')' after column definitions");
+					} else {
+						invalidToken("Expected '(' after table name");
+					}
+
+					return root;
+				} else {
+					invalidToken("Expected table name after CREATE TABLE");
+				}
+			} else {
+				invalidToken("Expected TABLE or DATABASE after CREATE");
+			}
+		}
+
+		case TokenType::SELECT: {
+			advance();
+			// SELECT * FROM <table_name>
+			// SELECT <column_name>, <column_name> FROM <table_name>
+
+			if (check(TokenType::ASTERISK)) {
+				advance();
+				if (check(TokenType::FROM)) {
+					advance();
+					if (check(TokenType::IDENTIFIER)) {
+						std::string table_name = advance().value;
+						auto root = std::make_unique<ASTNode>(ASTNodeType::SELECT);
+						auto projection_list = std::make_shared<ASTNode>(ASTNodeType::PROJECTION_LIST);
+						projection_list->add_child(std::make_shared<ASTNode>(ASTNodeType::COLUMN_REF, "*"));
+						root->add_child(projection_list);
+						root->add_child(std::make_shared<ASTNode>(ASTNodeType::TABLE_REF, table_name));
+						return root;
+					} else {
+						invalidToken("Expected table name after FROM");
+					}
+				} else {
+					invalidToken("Expected FROM after SELECT *");
+				}
+			} else if (check(TokenType::IDENTIFIER)) {
+				std::vector<std::string> columns;
+				while (check(TokenType::IDENTIFIER)) {
+					columns.push_back(advance().value);
+					if (check(TokenType::COMMA)) {
+						advance();
+					} else {
+						break;
+					}
+				}
+
+				if (check(TokenType::FROM)) {
+					advance();
+					if (check(TokenType::IDENTIFIER)) {
+						std::string table_name = advance().value;
+						auto root = std::make_unique<ASTNode>(ASTNodeType::SELECT);
+						auto projection_list = std::make_shared<ASTNode>(ASTNodeType::PROJECTION_LIST);
+						for (const auto& col : columns) {
+							projection_list->add_child(std::make_shared<ASTNode>(ASTNodeType::COLUMN_REF, col));
+						}
+						root->add_child(projection_list);
+						root->add_child(std::make_shared<ASTNode>(ASTNodeType::TABLE_REF, table_name));
+						return root;
+					} else {
+						invalidToken("Expected table name after FROM");
+					}
+				} else {
+					invalidToken("Expected FROM after column list");
+				}
+			} else {
+				invalidToken("Expected '*' or column names after SELECT");
+			}
+		}
+
+		case TokenType::INSERT: {
+			// INSERT INTO <table_name> VALUES (val1, val2, val3, ...)
+			advance();
+			if (check(TokenType::INTO)) {
+				advance();
+				if (check(TokenType::IDENTIFIER)) {
+					std::string table_name = advance().value;
+					auto root = std::make_unique<ASTNode>(ASTNodeType::INSERT, table_name);
+
+					if (check(TokenType::VALUES)) {
+						advance();
+						if (check(TokenType::LPAREN)) {
+							advance();
+							while (!isAtEnd() && !check(TokenType::RPAREN)) {
+								if (check(TokenType::LITERAL)) {
+									std::string value = advance().value;
+									root->add_child(std::make_shared<ASTNode>(ASTNodeType::CONST_VALUE, value));
+								} else {
+									invalidToken("Expected a literal in VALUES");
+								}
+								if (check(TokenType::COMMA)) {
+									advance();
+								}
+							}
+							consume(TokenType::RPAREN, "Expected ')' after VALUES");
+						} else {
+							invalidToken("Expected '(' after VALUES");
+						}
+					} else {
+						invalidToken("Expected VALUES after table name");
+					}
+
+					return root;
+				} else {
+					invalidToken("Expected table name after INTO");
+				}
+			} else {
+				invalidToken("Expected INTO after INSERT");
+			}
+		}
+
+		default: {
+			std::cout << "Not implemented: " << currentToken().value << std::endl;
+			return std::make_unique<ASTNode>(ASTNodeType::INVALID_NODE);
+		}
+		}
 	}
 
 	bool Parser::isAlpha(char c) {
@@ -311,6 +474,7 @@ namespace parser {
 		return tokens[current_token - 1];
 	}
 
+	// check is current token is same as expected token type
 	void Parser::consume(TokenType type, const std::string& message) {
 		if (check(type)) {
 			advance();
@@ -318,5 +482,10 @@ namespace parser {
 		}
 		throw std::runtime_error(message + ". Got: " + currentToken().value);
 	}
+
+	void Parser::invalidToken(const std::string& msg) {
+		throw std::runtime_error("Invalid Token: '" + currentToken().value + "'\n" + msg);
+	}
+
 } // namespace parser
 } // namespace venus

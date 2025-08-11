@@ -23,7 +23,8 @@ namespace executor {
 		try {
 			auto ast = parser_.parse(query);
 
-			std::cout << "Parsed AST Node Type: " << static_cast<int>(ast->type) << std::endl;
+			ast->print();
+
 		} catch (const std::exception& e) {
 			std::cout << "Error: " << e.what() << std::endl;
 		}

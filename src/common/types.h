@@ -49,7 +49,7 @@ enum class TokenType : uint8_t {
 	IDENTIFIER, // table or column name
 
 	WHERE,
-	STAR,
+	ASTERISK,
 	JOIN,
 	GROUP_BY,
 	HAVING,
@@ -102,17 +102,28 @@ enum class ASTNodeType : uint8_t {
 
 	CREATE_TABLE,
 	DROP_TABLE,
+	SHOW_TABLES,
 
 	SELECT,
 	INSERT,
 	UPDATE,
 	DELETE,
 
+	TABLE_REF, // planets
+	COLUMN_REF, // planets.id
+	COLUMN_DEF, // id INT PRIMARY_KEY
+	CONST_VALUE, // 420, '69', 420.69
+
+	PROJECTION_LIST, // planets.id, planets.name
+	CONDITION, // planets.id = 420
 	WHERE_CLAUSE,
+	FROM_CLAUSE,
 	JOIN_CLAUSE,
 	GROUP_BY_CLAUSE,
 	HAVING_CLAUSE,
-	ORDER_BY_CLAUSE
+	ORDER_BY_CLAUSE,
+	LIMIT_CLAUSE,
+	ASSIGNMENT,
 };
 
 }
