@@ -280,18 +280,22 @@ namespace parser {
 					std::string table_name = advance().value;
 					auto root = std::make_unique<ASTNode>(ASTNodeType::CREATE_TABLE, table_name);
 
-					advance();
 					if (check(TokenType::LPAREN)) {
 						advance();
 						while (!isAtEnd() && !check(TokenType::RPAREN)) {
 							if (check(TokenType::IDENTIFIER)) {
 								std::string col_name = advance().value;
-								advance();
+
 								if (check(TokenType::INT_TYPE) || check(TokenType::FLOAT_TYPE) || check(TokenType::CHAR_TYPE)) {
 									std::string col_type = advance().value;
-									advance();
+
+									bool is_primary_key = false;
 									if (check(TokenType::PK)) {
 										advance();
+										is_primary_key = true;
+									}
+
+									if (is_primary_key) {
 										root->children.emplace_back(std::make_unique<ASTNode>(ASTNodeType::COLUMN_DEF, col_name + " " + col_type + " PK"));
 									} else {
 										root->children.emplace_back(std::make_unique<ASTNode>(ASTNodeType::COLUMN_DEF, col_name + " " + col_type));
@@ -420,7 +424,7 @@ namespace parser {
 			std::cout << "Not implemented: " << currentToken().value << std::endl;
 			return std::make_unique<ASTNode>(ASTNodeType::INVALID_NODE);
 		}
-		}
+	}
 	}
 
 	bool Parser::isAlpha(char c) {

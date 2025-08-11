@@ -106,6 +106,7 @@ enum class ASTNodeType : uint8_t {
 
 	SELECT,
 	INSERT,
+	INSERT_MANY,
 	UPDATE,
 	DELETE,
 
@@ -114,7 +115,7 @@ enum class ASTNodeType : uint8_t {
 	COLUMN_DEF, // id INT PRIMARY_KEY
 	CONST_VALUE, // 420, '69', 420.69
 
-	PROJECTION_LIST, // planets.id, planets.name
+	PROJECTION_LIST, // planets.id, planets.name -> pi in relational model
 	CONDITION, // planets.id = 420
 	WHERE_CLAUSE,
 	FROM_CLAUSE,
