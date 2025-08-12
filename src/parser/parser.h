@@ -56,7 +56,7 @@ namespace parser {
 		}
 
 		// Main parse method - returns AST
-		std::unique_ptr<ASTNode> parse(const std::string& query);
+		std::unique_ptr<ASTNode> Parse(const std::string& query);
 
 	private:
 		std::vector<Token> tokens;
@@ -75,7 +75,7 @@ namespace parser {
 		bool match(TokenType type);
 		Token advance();
 		void consume(TokenType type, const std::string& message);
-		void invalidToken(const std::string &msg);
+		void invalidToken(const std::string& msg);
 
 		DISALLOW_COPY_AND_MOVE(Parser);
 	};

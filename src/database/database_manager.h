@@ -13,20 +13,22 @@
  *   - Dependency injection for executors
  *   - Resource coordination
  *
- * Architecture:
- *   DatabaseManager
- *   ├── DiskManager (disk I/O)
- *   ├── BufferPoolManager (memory management)
- *   ├── BufferPoolManager (memory management)
- *   ├── CatalogManager (metadata management)
- *   └── ExecutionManager (query execution)
+ * DatabaseManager
+ * ├── DiskManager (disk I/O)
+ * ├── BufferPoolManager (memory management)
+ * ├── BufferPoolManager (memory management)
+ * ├── CatalogManager (metadata management)
+ * └── ExecutionManager (query execution)
  */
 
 #pragma once
 
 #include "common/config.h"
 
+#include <filesystem>
+#include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 namespace venus {

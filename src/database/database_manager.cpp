@@ -4,12 +4,8 @@
 #include "buffer/buffer_pool.h"
 #include "catalog/catalog.h"
 #include "common/config.h"
-#include "executor/executor.h"
+#include "executor/execution_engine.h"
 #include "storage/disk_manager.h"
-
-#include <filesystem>
-#include <iostream>
-#include <stdexcept>
 
 using namespace venus::database;
 using namespace venus::storage;

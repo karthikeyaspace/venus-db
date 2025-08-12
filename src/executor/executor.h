@@ -1,95 +1,57 @@
-// /src/executor/executor.h
-
 /**
  * Executor Framework for Venus DB
  *
- * The executor system is responsible for implementing query execution operators
- * in a modular, pipeline-based architecture. Each executor implements a specific
- * database operation and can be chained together to form complex query plans.
+ * The Executor is responsible for taking a fully constructed query Plan
+ * (produced by the Planner from a Bound AST) and executing it to produce results.
+ * 
+ * Execution Model:
+ *   - Venus DB uses an iterator-based (Volcano-style) model.
+ *   - Each Executor implements the standard lifecycle:
+ *       1. Open()  — Prepare resources and initialize child executors.
+ *       2. Next()  — Produce the next output tuple (pull model).
+ *       3. Close() — Release resources and clean up.
+ *   - Executors are connected in a pipeline where parent executors
+ *     pull tuples from child executors on demand.
+ *   - Streaming-oriented: tuples are processed as they are generated
+ *     without requiring the entire dataset in memory.
+ * 
+ * Relationship to Planner:
+ *   - The Planner generates a Plan tree composed of PlanNode objects.
+ *   - For each PlanNodeType, there is a corresponding Executor subclass.
+ *   - Executors use the metadata and parameters from their PlanNode
+ *     to perform the specified operation.
  *
- * Current Executors:
- * 1. Scan - Handles table scanning with WHERE clause filters
- *    - Supports predicate pushdown for efficient filtering
- *    - Does NOT handle GROUP BY, HAVING, or aggregation operations
- *    - Primarily focused on row-level filtering during table access
+ * Supported Executor Types (aligned with PlanNodeTypes):
+ *   - SeqScanExecutor       — Full table scan.
+ *   - IndexScanExecutor     — Index-based scan (future extension).
+ *   - ProjectionExecutor    — Select specific columns from input.
+ *   - FilterExecutor        — Apply a WHERE condition to filter tuples.
+ *   - JoinExecutor          — Combine rows from multiple inputs (nested loop join in v1).
+ *   - AggregationExecutor   — GROUP BY and aggregate function computation.
+ *   - SortExecutor          — ORDER BY implementation.
+ *   - LimitExecutor         — Restrict output to N rows.
+ *   - InsertExecutor        — Insert new rows into a table.
+ *   - UpdateExecutor        — Update existing rows.
+ *   - DeleteExecutor        — Delete rows from a table.
  *
- * Planned Executors:
- * 2. Filter - Additional WHERE clause filtering for complex predicates
- * 3. Sort - ORDER BY operations and sorting support
- * 4. Aggregate - GROUP BY, HAVING, and aggregation functions (SUM, COUNT, etc.)
- * 5. Join - Various join algorithms (nested loop, hash join, sort-merge)
- * 6. Limit - LIMIT and OFFSET operations for result set pagination
- * 7. Insert - INSERT statement execution
- * 8. Update - UPDATE statement execution
- * 9. Delete - DELETE statement execution
- *
- * Architecture:
- * - Iterator-based execution model (Volcano-style)
- * - Each executor implements Open(), Next(), Close() interface
- * - Supports both pull-based and push-based execution
- * - Memory-efficient streaming processing
- * - Statistics collection for query optimization
- *
- * Threading Model:
- * - Thread-safe executor implementations
- * - Support for parallel execution where applicable
- * - Resource management and cleanup
- *
- * ExecutionEngine owns the REPL interface and coordinates query execution among parser, planner, and various executors
- * Will integrate with parser and planner once they are implemented
- *
+ *   DDL and Utility Executors:
+ *   - CreateDatabaseExecutor — CREATE DATABASE.
+ *   - DropDatabaseExecutor   — DROP DATABASE.
+ *   - UseDatabaseExecutor    — USE DATABASE.
+ *   - CreateTableExecutor    — CREATE TABLE.
+ *   - DropTableExecutor      — DROP TABLE.
+ *   - CreateIndexExecutor    — CREATE INDEX.
+ *   - DropIndexExecutor      — DROP INDEX.
+ *   - ShowDatabasesExecutor  — SHOW DATABASES.
+ *   - ShowTablesExecutor     — SHOW TABLES.
+ *   - HelpExecutor           — HELP command.
+ *   - ExitExecutor           — EXIT command.
+ *   - ExecFileExecutor       — EXEC <file>.
+ * 
+ * Notes:
+ *   - Executors are stateful: internal cursors/iterators track progress.
+ *   - Can be extended for push-based execution or parallel operators.
+ *   - Designed to support statistics collection for future optimizer integration.
+ *   - All executors should be unit-testable in isolation.
+ *   - Every executor is inherited from a common base class.
  */
-
-#pragma once
-
-#include "buffer/buffer_pool.h"
-#include "catalog/catalog.h"
-#include "catalog/schema.h"
-#include "common/config.h"
-#include "table/table_heap.h"
-#include "parser/parser.h"
-
-#include <functional>
-#include <iostream>
-#include <string>
-#include <vector>
-
-using namespace venus::catalog;
-using namespace venus::buffer;
-using namespace venus::table;
-using namespace venus::parser;
-
-namespace venus {
-namespace executor {
-	class ExecutionEngine {
-	public:
-		~ExecutionEngine();
-
-		void InitializeCallback(std::function<void(const std::string&)> cb) {
-			init_callback_ = std::move(cb);
-		}
-
-		void SetLocalContext(BufferPoolManager* bpm,
-		    CatalogManager* catalog) {
-			bpm_ = bpm;
-			catalog_ = catalog;
-		}
-
-		void SetStopDBCallback(std::function<void()> cb) {
-			stop_db_callback_ = std::move(cb);
-		}
-
-		void execute(const std::string& query);
-		void StartRepl();
-
-	private:
-		BufferPoolManager* bpm_ = nullptr;
-		CatalogManager* catalog_ = nullptr;
-
-		Parser parser_;
-
-		std::function<void(const std::string&)> init_callback_;
-		std::function<void()> stop_db_callback_;
-	};
-} // namespace executor
-} // namespace venus

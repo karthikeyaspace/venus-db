@@ -8,9 +8,10 @@
 #include "parser/parser.h"
 
 /**
- * Know parser issues
+ * Known parser issues to fix
  * - UNARY MINUS eg: -42
  * - float eg: .5
+ * - identifier names eg: myVar - currently small casing all of them
  */
 
 namespace venus {
@@ -198,7 +199,10 @@ namespace parser {
 	}
 
 	// Return AST
-	std::unique_ptr<ASTNode> Parser::parse(const std::string& query) {
+	std::unique_ptr<ASTNode> Parser::Parse(const std::string& query) {
+
+		// Reference for SQL grammer - https://forcedotcom.github.io/phoenix
+
 		tokens = tokenize(query);
 
 		current_token = 0;
@@ -369,7 +373,7 @@ namespace parser {
 						root->add_child(std::make_shared<ASTNode>(ASTNodeType::TABLE_REF, table_name));
 						return root;
 					} else {
-						invalidToken("Expected table name after FROM");
+						invalidToken("Expected table exe after FROM");
 					}
 				} else {
 					invalidToken("Expected FROM after column list");
@@ -424,7 +428,7 @@ namespace parser {
 			std::cout << "Not implemented: " << currentToken().value << std::endl;
 			return std::make_unique<ASTNode>(ASTNodeType::INVALID_NODE);
 		}
-	}
+		}
 	}
 
 	bool Parser::isAlpha(char c) {
