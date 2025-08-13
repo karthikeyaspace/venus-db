@@ -27,8 +27,9 @@ namespace executor {
 				return false;
 			}
 
-			auto bounded_ast = binder_.Bind(std::move(ast));
+			ast->print();
 
+			auto bounded_ast = binder_.Bind(std::move(ast));
 
 		} catch (const std::exception& e) {
 			std::cout << e.what() << std::endl;

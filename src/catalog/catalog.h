@@ -66,9 +66,9 @@ namespace catalog {
 
 		void CreateTable(const std::string& table_name, const Schema* schema);
 
-		Schema* GetTableSchema(const std::string& table_name);
+		Schema* GetTableSchema(table_id_t table_id);
 
-		bool TableExists(const std::string& table_name);
+		table_id_t TableExists(const std::string& table_name);
 		std::vector<std::string> GetAllTables();
 
 		void ShowMasterTables();

@@ -89,11 +89,25 @@ namespace parser {
 	struct BoundASTNode {
 		ASTNodeType type;
 		virtual ~BoundASTNode() = default;
-	};
+ 	};
 
 	struct BoundTableRef {
 		table_id_t table_id;
-		TableEntry* table_entry_;
+		std::string table_name;
+		Schema schema;
+
+		BoundTableRef(table_id_t id_, const std::string& name_, const Schema &schema_)
+		    : table_id(id_)
+		    , table_name(name_)
+		    , schema(schema_) { }
+
+		const Column& GetColumnByName(const std::string& name) const {
+			return schema.GetColumn(name);
+		}
+
+		const Column& GetColumnByIndex(size_t index) const {
+			return schema.GetColumn(index);
+		}
 	};
 
 	struct BoundColumnRef {

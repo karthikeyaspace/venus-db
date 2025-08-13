@@ -88,30 +88,15 @@ public:
 		return columns_[index];
 	}
 
+	bool HasColumn(const std::string& name) const {
+		return column_name_to_index_.find(name) != column_name_to_index_.end();
+	}
+
 	size_t GetColumnCount() const { return columns_.size(); }
 
 private:
 	std::vector<Column> columns_;
 	std::unordered_map<std::string, size_t> column_name_to_index_;
-};
-
-struct TableEntry {
-	table_id_t table_id;
-	std::string table_name;
-	Schema schema;
-
-	TableEntry(table_id_t id_, const std::string& name_, Schema schema_)
-	    : table_id(id_)
-	    , table_name(name_)
-	    , schema(std::move(schema_)) { }
-
-	const Column& GetColumnByName(const std::string& name) const {
-		return schema.GetColumn(name);
-	}
-
-	const Column& GetColumnByIndex(size_t index) const {
-		return schema.GetColumn(index);
-	}
 };
 
 } // namespace venus

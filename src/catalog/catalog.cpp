@@ -90,10 +90,6 @@ namespace catalog {
 	}
 
 	void CatalogManager::CreateTable(const std::string& table_name, const Schema* schema) {
-		if (TableExists(table_name)) {
-			throw std::runtime_error("Table '" + table_name + "' already exists.");
-		}
-
 		page_id_t first_page_id = bpm_->NewPage()->GetPageId();
 		table_id_t table_id = GetNextTableId();
 
@@ -132,35 +128,45 @@ namespace catalog {
 	}
 
 	// access both tables, and create  a schema object
-	Schema* CatalogManager::GetTableSchema(const std::string& table_name) {
-		if (!TableExists(table_name)) {
-			throw std::runtime_error("Table '" + table_name + "' does not exist.");
-		}
-
+	Schema* CatalogManager::GetTableSchema(table_id_t table_id) {
 		Schema* schema = new Schema();
+
 		for (auto it = columns_table_->begin(); it != columns_table_->end(); ++it) {
 			const Tuple& tuple = *it;
-			const char* value = tuple.GetValue(1, master_columns_schema_); // table_id
-			if (std::stoi(std::string(value)) == std::stoi(table_name)) {
+
+			// Get table_id from column 1 of master_columns
+			std::string tuple_table_id_str = GetValueAsString(tuple, 1, master_columns_schema_);
+			table_id_t tuple_table_id = static_cast<table_id_t>(std::stoi(tuple_table_id_str));
+
+			if (tuple_table_id == table_id) {
 				const char* col_name = tuple.GetValue(2, master_columns_schema_);
-				ColumnType col_type = static_cast<ColumnType>(std::stoi(std::string(tuple.GetValue(3, master_columns_schema_))));
-				size_t ordinal_position = std::stoi(std::string(tuple.GetValue(5, master_columns_schema_)));
-				bool is_primary = std::stoi(std::string(tuple.GetValue(6, master_columns_schema_))) == 1;
+				std::string col_type_str = GetValueAsString(tuple, 3, master_columns_schema_);
+
+				if (col_type_str.empty()) {
+					continue; // Skip invalid entries
+				}
+
+				ColumnType col_type = static_cast<ColumnType>(std::stoi(col_type_str));
+				size_t ordinal_position = std::stoi(GetValueAsString(tuple, 5, master_columns_schema_));
+				bool is_primary = std::stoi(GetValueAsString(tuple, 6, master_columns_schema_)) == 1;
+
 				schema->AddColumn(col_name, col_type, is_primary, ordinal_position);
 			}
 		}
+
 		return schema;
 	}
 
-	bool CatalogManager::TableExists(const std::string& table_name) {
+	table_id_t CatalogManager::TableExists(const std::string& table_name) {
 		for (auto it = tables_table_->begin(); it != tables_table_->end(); ++it) {
 			const Tuple& tuple = *it;
 			const char* value = tuple.GetValue(1, master_tables_schema_); // Get table_name
 			if (std::string(value) == table_name) {
-				return true;
+				std::string table_id_str = GetValueAsString(tuple, 0, master_tables_schema_);
+				return static_cast<table_id_t>(std::stoi(table_id_str));
 			}
 		}
-		return false;
+		return -1;
 	}
 
 	table_id_t CatalogManager::GetNextTableId() {
@@ -186,26 +192,34 @@ namespace catalog {
 	}
 
 	void CatalogManager::InsertSystemTableColumns() {
-		// Schema: column_id, table_id, column_name, column_type, column_size, ordinal_position
-		columns_table_->InsertTuple({ "0", "0", "table_id", "0", "4", "0", "1" });
-		columns_table_->InsertTuple({ "1", "0", "table_name", "1", "32", "1", "0" });
-		columns_table_->InsertTuple({ "2", "0", "num_columns", "0", "4", "2", "0" });
-		columns_table_->InsertTuple({ "3", "0", "first_page_id", "0", "4", "3", "0" });
-		columns_table_->InsertTuple({ "4", "0", "primary_key", "0", "4", "4", "0" });
+		// For master_tables (table_id = 0) columns
+		// Schema: column_id(INT), table_id(INT), column_name(CHAR), column_type(INT), column_size(INT), ordinal_position(INT), is_primary_key(INT)
+		// ColumnType values: INVALID_COLUMN=0, INT=1, FLOAT=2, CHAR=3
 
-		// Schema: column_id, table_id, column_name, column_type, column_size, ordinal_position, is_primary_key
-		columns_table_->InsertTuple({ "5", "1", "column_id", "0", "4", "0", "1" });
-		columns_table_->InsertTuple({ "6", "1", "table_id", "0", "4", "1", "0" });
-		columns_table_->InsertTuple({ "7", "1", "column_name", "1", "32", "2", "0" });
-		columns_table_->InsertTuple({ "8", "1", "column_type", "0", "4", "3", "0" });
-		columns_table_->InsertTuple({ "9", "1", "column_size", "0", "4", "4", "0" });
-		columns_table_->InsertTuple({ "10", "1", "ordinal_position", "0", "4", "5", "0" });
-		columns_table_->InsertTuple({ "11", "1", "is_primary_key", "0", "4", "6", "0" });
+		// master_tables columns
+		columns_table_->InsertTuple({ "0", "0", "table_id", "1", "4", "0", "1" }); // INT type
+		columns_table_->InsertTuple({ "1", "0", "table_name", "3", "32", "1", "0" }); // CHAR type
+		columns_table_->InsertTuple({ "2", "0", "num_columns", "1", "4", "2", "0" }); // INT type
+		columns_table_->InsertTuple({ "3", "0", "first_page_id", "1", "4", "3", "0" }); // INT type
+		columns_table_->InsertTuple({ "4", "0", "primary_key", "1", "4", "4", "0" }); // INT type
+
+		// master_columns columns
+		columns_table_->InsertTuple({ "5", "1", "column_id", "1", "4", "0", "1" }); // INT type
+		columns_table_->InsertTuple({ "6", "1", "table_id", "1", "4", "1", "0" }); // INT type
+		columns_table_->InsertTuple({ "7", "1", "column_name", "3", "32", "2", "0" }); // CHAR type
+		columns_table_->InsertTuple({ "8", "1", "column_type", "1", "4", "3", "0" }); // INT type
+		columns_table_->InsertTuple({ "9", "1", "column_size", "1", "4", "4", "0" }); // INT type
+		columns_table_->InsertTuple({ "10", "1", "ordinal_position", "1", "4", "5", "0" }); // INT type
+		columns_table_->InsertTuple({ "11", "1", "is_primary_key", "1", "4", "6", "0" }); // INT type
 	}
 
 	std::string CatalogManager::GetValueAsString(const Tuple& tuple, uint32_t column_idx, const Schema* schema) const {
 		const Column& column = schema->GetColumn(column_idx);
 		const char* raw_data = tuple.GetValue(column_idx, schema);
+
+		if (raw_data == nullptr) {
+			return "";
+		}
 
 		switch (column.GetType()) {
 		case ColumnType::INT: {
@@ -260,6 +274,5 @@ namespace catalog {
 		}
 		std::cout << std::endl;
 	}
-
 }
 }
