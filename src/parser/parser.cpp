@@ -23,8 +23,10 @@ namespace parser {
 		{ "drop", TokenType::DROP },
 		{ "use", TokenType::USE },
 		{ "database", TokenType::DATABASE },
+		{ "databases", TokenType::DATABASES },
 
 		{ "table", TokenType::TABLE },
+		{ "tables", TokenType::TABLES },
 		{ "select", TokenType::SELECT },
 		{ "insert", TokenType::INSERT },
 		{ "update", TokenType::UPDATE },
@@ -136,7 +138,7 @@ namespace parser {
 					i++;
 				}
 				if (i >= query.length()) {
-					throw std::runtime_error("Unterminated string literal");
+					throw std::runtime_error("Parser error: Unterminated string literal");
 				}
 				std::string value = query.substr(start, i - start);
 				result.emplace_back(TokenType::LITERAL, value);
@@ -191,7 +193,7 @@ namespace parser {
 				continue;
 			}
 
-			throw std::runtime_error("Unexpected character: " + std::string(1, c));
+			throw std::runtime_error("Parser error: Unexpected character: " + std::string(1, c));
 		}
 
 		result.emplace_back(TokenType::END, "END");
@@ -208,7 +210,7 @@ namespace parser {
 		current_token = 0;
 
 		if (tokens.empty() || (tokens.size() == 1 && tokens[0].type == TokenType::END)) {
-			throw std::runtime_error("Query is empty!");
+			throw std::runtime_error("Parser error: Query is empty!");
 		}
 
 		// walk through the tokens, check grammer, create ast
@@ -217,11 +219,11 @@ namespace parser {
 		switch (first_token.type) {
 		case TokenType::SHOW: {
 			advance();
-			if (check(TokenType::DATABASE)) {
+			if (check(TokenType::DATABASES)) {
 				advance();
 				auto root = std::make_unique<ASTNode>(ASTNodeType::SHOW_DATABASES);
 				return root;
-			} else if (check(TokenType::TABLE)) {
+			} else if (check(TokenType::TABLES)) {
 				advance();
 				auto root = std::make_unique<ASTNode>(ASTNodeType::SHOW_TABLES);
 				return root;
@@ -424,6 +426,14 @@ namespace parser {
 			}
 		}
 
+		case TokenType::EXIT: {
+			advance();
+			if (check(TokenType::SEMICOLON)) {
+				advance();
+			}
+			return std::make_unique<ASTNode>(ASTNodeType::EXIT);
+		}
+
 		default: {
 			std::cout << "Not implemented: " << currentToken().value << std::endl;
 			return std::make_unique<ASTNode>(ASTNodeType::INVALID_NODE);
@@ -445,7 +455,7 @@ namespace parser {
 
 	Token& Parser::currentToken() {
 		if (current_token >= tokens.size()) {
-			throw std::runtime_error("Unexpected end of input");
+			throw std::runtime_error("Parser error: Unexpected end of input");
 		}
 		return tokens[current_token];
 	}
@@ -488,11 +498,11 @@ namespace parser {
 			advance();
 			return;
 		}
-		throw std::runtime_error(message + ". Got: " + currentToken().value);
+		throw std::runtime_error("Parser error: " + message + ". Got: " + currentToken().value);
 	}
 
 	void Parser::invalidToken(const std::string& msg) {
-		throw std::runtime_error("Invalid Token: '" + currentToken().value + "'\n" + msg);
+		throw std::runtime_error("Parser error: Invalid Token '" + currentToken().value + "'\n" + msg);
 	}
 
 } // namespace parser

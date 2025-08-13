@@ -8,7 +8,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/config.h"
+
 namespace venus {
+
 enum class PageType : uint8_t {
 	INVALID_PAGE = 0,
 	TABLE_PAGE, // regular data page
@@ -33,8 +36,10 @@ enum class TokenType : uint8_t {
 	DROP,
 	USE,
 	DATABASE,
+	DATABASES,
 
 	TABLE,
+	TABLES,
 
 	SELECT,
 	INSERT,
@@ -125,6 +130,8 @@ enum class ASTNodeType : uint8_t {
 	ORDER_BY_CLAUSE,
 	LIMIT_CLAUSE,
 	ASSIGNMENT,
-};
 
+	EXIT,
+	EXEC
+};
 }

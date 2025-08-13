@@ -16,14 +16,15 @@ include_directories(
 )
     
 file(GLOB_RECURSE SOURCES 
-    "${PROJECT_SOURCE_DIR}/storage/*.cpp"
+    "${PROJECT_SOURCE_DIR}/binder/*.cpp"
     "${PROJECT_SOURCE_DIR}/buffer/*.cpp" 
-    "${PROJECT_SOURCE_DIR}/table/*.cpp"
     "${PROJECT_SOURCE_DIR}/catalog/*.cpp"
-    "${PROJECT_SOURCE_DIR}/database/*.cpp"
-    "${PROJECT_SOURCE_DIR}/parser/*.cpp"
-    "${PROJECT_SOURCE_DIR}/executor/*.cpp"
     "${PROJECT_SOURCE_DIR}/common/*.cpp"
+    "${PROJECT_SOURCE_DIR}/database/*.cpp"
+    "${PROJECT_SOURCE_DIR}/executor/*.cpp"
+    "${PROJECT_SOURCE_DIR}/parser/*.cpp"
+    "${PROJECT_SOURCE_DIR}/storage/*.cpp"
+    "${PROJECT_SOURCE_DIR}/table/*.cpp"
     "${PROJECT_SOURCE_DIR}/main.cpp"
 )
 

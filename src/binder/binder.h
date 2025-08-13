@@ -7,6 +7,8 @@
  * symbols in the database schema.
  *
  * Resolves names and types
+ * Adds metadata to AST to create BoundAstNode,
+ * 		so further steps need not refetch from catalog
  * Turns tables names to reference to an actual table object in the catalog
  * Turns column names like "rad" to "column #3 in planets, type=FLOAT"
  * Resolves permissions (if any, not for venus)
@@ -27,7 +29,7 @@ namespace binder {
 			catalog_ = catalog;
 		}
 
-		std::unique_ptr<parser::ASTNode> Bind(std::unique_ptr<parser::ASTNode> ast);
+		std::unique_ptr<parser::BoundASTNode> Bind(std::unique_ptr<parser::ASTNode> ast);
 
 	private:
 		catalog::CatalogManager* catalog_ = nullptr;

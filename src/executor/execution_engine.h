@@ -41,7 +41,7 @@ namespace venus {
 namespace executor {
 	class ExecutionEngine {
 	public:
-		~ExecutionEngine();
+		~ExecutionEngine() = default;
 
 		void InitializeCallback(std::function<void(const std::string&)> cb) {
 			init_callback_ = std::move(cb);
@@ -58,7 +58,7 @@ namespace executor {
 			stop_db_callback_ = std::move(cb);
 		}
 
-		void Execute(const std::string& query);
+		bool Execute(const std::string& query);
 		void StartRepl();
 
 	private:

@@ -1,34 +1,39 @@
 // /src/executor/executor.cpp
 
-#include "executor/execution_engine.h"
-#include "parser/parser.h"
-
 #include <iostream>
 #include <sstream>
 
-#include "table/table_heap.h"
+#include "executor/execution_engine.h"
 
 using namespace venus::parser;
+using namespace venus::binder;
 
 namespace venus {
 namespace executor {
 
-	ExecutionEngine::~ExecutionEngine() {
-		if (stop_db_callback_) {
-			stop_db_callback_();
-		}
-	}
-
-	void ExecutionEngine::Execute(const std::string& query) {
+	bool ExecutionEngine::Execute(const std::string& query) {
 		try {
 			auto ast = parser_.Parse(query);
+
+			if (ast->type == ASTNodeType::USE_DATABASE) {
+				std::string db_name = ast->value;
+				init_callback_(db_name);
+				std::cout << "Database initialized: " << db_name << std::endl;
+				return true;
+			}
+
+			if (ast->type == ASTNodeType::EXIT) {
+				stop_db_callback_();
+				return false;
+			}
+
 			auto bounded_ast = binder_.Bind(std::move(ast));
 
-			bounded_ast->print();
 
 		} catch (const std::exception& e) {
-			std::cout << "Error: " << e.what() << std::endl;
+			std::cout << e.what() << std::endl;
 		}
+		return true;
 	}
 
 	void ExecutionEngine::StartRepl() {
@@ -40,15 +45,12 @@ namespace executor {
 			std::cout << "venus> ";
 			std::getline(std::cin, query);
 
-			if (query == "exit" || query == "quit") {
-				stop_db_callback_();
-				break;
-			}
-
 			if (query.empty())
 				continue;
 
-			this->Execute(query);
+			if (!this->Execute(query)) {
+				break;
+			}
 		}
 	}
 } // namespace executor
