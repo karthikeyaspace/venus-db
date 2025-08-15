@@ -31,6 +31,9 @@ namespace executor {
 
 			auto bounded_ast = binder_.Bind(std::move(ast));
 
+			std::cout << std::endl;
+			bounded_ast->print();
+
 		} catch (const std::exception& e) {
 			std::cout << e.what() << std::endl;
 		}
@@ -45,6 +48,8 @@ namespace executor {
 			std::cout << std::endl;
 			std::cout << "venus> ";
 			std::getline(std::cin, query);
+
+			std::cout << std::endl;
 
 			if (query.empty())
 				continue;

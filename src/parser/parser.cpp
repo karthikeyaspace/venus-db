@@ -37,7 +37,8 @@ namespace parser {
 		{ "values", TokenType::VALUES },
 		{ "where", TokenType::WHERE },
 
-		{ "primary_key", TokenType::PK },
+		{ "primary", TokenType::PRIMARY },
+		{ "key", TokenType::KEY },
 		{ "join", TokenType::JOIN },
 		{ "group_by", TokenType::GROUP_BY },
 		{ "having", TokenType::HAVING },
@@ -296,9 +297,14 @@ namespace parser {
 									std::string col_type = advance().value;
 
 									bool is_primary_key = false;
-									if (check(TokenType::PK)) {
+									if (check(TokenType::PRIMARY)) {
 										advance();
-										is_primary_key = true;
+										if (check(TokenType::KEY)) {
+											advance();
+											is_primary_key = true;
+										} else {
+											invalidToken("Expected KEY after PRIMARY");
+										}
 									}
 
 									if (is_primary_key) {

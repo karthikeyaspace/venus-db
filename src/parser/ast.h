@@ -89,14 +89,16 @@ namespace parser {
 	struct BoundASTNode {
 		ASTNodeType type;
 		virtual ~BoundASTNode() = default;
- 	};
+
+		virtual void print() const = 0;
+	};
 
 	struct BoundTableRef {
 		table_id_t table_id;
 		std::string table_name;
 		Schema schema;
 
-		BoundTableRef(table_id_t id_, const std::string& name_, const Schema &schema_)
+		BoundTableRef(table_id_t id_, const std::string& name_, const Schema& schema_)
 		    : table_id(id_)
 		    , table_name(name_)
 		    , schema(schema_) { }
@@ -135,6 +137,14 @@ namespace parser {
 		    : database_name(db_name) {
 			type = node_type;
 		}
+
+		void print() const override {
+			std::cout << "BoundDatabaseNode:\n";
+			std::cout << "  Type: " << ASTNode::typeToString(type) << "\n";
+			if (!database_name.empty()) {
+				std::cout << "  Database: " << database_name << "\n";
+			}
+		}
 	};
 
 	struct BoundSelectNode : BoundASTNode {
@@ -154,6 +164,29 @@ namespace parser {
 		    , limit(limit_value) {
 			type = ASTNodeType::SELECT;
 		}
+
+		void print() const override {
+			std::cout << "BoundSelectNode:\n";
+			std::cout << "  Table: " << table_ref.table_name << " (ID: " << table_ref.table_id << ")\n";
+			std::cout << "  Projections: ";
+			for (size_t i = 0; i < projections.size(); ++i) {
+				if (projections[i].column_entry_) {
+					std::cout << projections[i].column_entry_->GetName();
+				} else {
+					std::cout << "col_id_" << projections[i].col_id;
+				}
+				if (i < projections.size() - 1)
+					std::cout << ", ";
+			}
+			std::cout << "\n";
+			if (where_clause) {
+				std::cout << "  Where: " << where_clause->left.column_entry_->GetName()
+				          << " " << where_clause->op << " " << where_clause->right.value << "\n";
+			}
+			if (limit > 0) {
+				std::cout << "  Limit: " << limit << "\n";
+			}
+		}
 	};
 
 	struct BoundInsertNode : BoundASTNode {
@@ -170,6 +203,28 @@ namespace parser {
 		    , values(std::move(vals)) {
 			type = ASTNodeType::INSERT;
 		}
+
+		void print() const override {
+			std::cout << "BoundInsertNode:\n";
+			std::cout << "  Table: " << table_ref.table_name << " (ID: " << table_ref.table_id << ")\n";
+			std::cout << "  Columns: ";
+			for (size_t i = 0; i < target_cols.size(); ++i) {
+				if (target_cols[i].column_entry_) {
+					std::cout << target_cols[i].column_entry_->GetName();
+				} else {
+					std::cout << "col_id_" << target_cols[i].col_id;
+				}
+				if (i < target_cols.size() - 1)
+					std::cout << ", ";
+			}
+			std::cout << "\n  Values: ";
+			for (size_t i = 0; i < values.size(); ++i) {
+				std::cout << values[i].value;
+				if (i < values.size() - 1)
+					std::cout << ", ";
+			}
+			std::cout << "\n";
+		}
 	};
 
 	struct BoundCreateTableNode : BoundASTNode {
@@ -184,6 +239,19 @@ namespace parser {
 		void add_column(const Column& column) {
 			columns.push_back(column);
 		}
+
+		void print() const override {
+			std::cout << "BoundCreateTableNode:\n";
+			std::cout << "  Table: " << table_name << "\n";
+			std::cout << "  Columns:\n";
+			for (const auto& col : columns) {
+				std::cout << "    " << col.GetName() << " (" << static_cast<int>(col.GetType()) << ")";
+				if (col.IsPrimary())
+					std::cout << " (PK)";
+
+				std::cout << std::endl;
+			}
+		}
 	};
 
 	struct BoundDropTableNode : BoundASTNode {
@@ -193,11 +261,20 @@ namespace parser {
 		    : table_name(table_name) {
 			type = ASTNodeType::DROP_TABLE;
 		}
+
+		void print() const override {
+			std::cout << "BoundDropTableNode:\n";
+			std::cout << "  Table: " << table_name << "\n";
+		}
 	};
 
 	struct BoundShowTablesNode : BoundASTNode {
 		BoundShowTablesNode() {
 			type = ASTNodeType::SHOW_TABLES;
+		}
+
+		void print() const override {
+			std::cout << "BoundShowTablesNode\n";
 		}
 	};
 
@@ -207,6 +284,11 @@ namespace parser {
 		BoundExecNode(const std::string& query)
 		    : query(query) {
 			type = ASTNodeType::EXEC;
+		}
+
+		void print() const override {
+			std::cout << "BoundExecNode:\n";
+			std::cout << "  Query: " << query << "\n";
 		}
 	};
 

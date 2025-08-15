@@ -49,7 +49,8 @@ enum class TokenType : uint8_t {
 	INTO,
 	VALUES,
 	FROM,
-	PK,
+	PRIMARY,
+	KEY,
 
 	IDENTIFIER, // table or column name
 
