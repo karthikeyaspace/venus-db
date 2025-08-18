@@ -64,7 +64,7 @@ namespace parser {
 			}
 		}
 
-		void print(int depth = 0) const {
+		void Print(int depth = 0) const {
 			// Indentation
 			for (int i = 0; i < depth; i++) {
 				std::cout << "  ";
@@ -80,7 +80,7 @@ namespace parser {
 			// Recurse
 			for (const auto& child : children) {
 				if (child) {
-					child->print(depth + 1);
+					child->Print(depth + 1);
 				}
 			}
 		}
@@ -90,7 +90,9 @@ namespace parser {
 		ASTNodeType type;
 		virtual ~BoundASTNode() = default;
 
-		virtual void print() const = 0;
+		ASTNodeType GetType() const { return type; }
+
+		virtual void Print() const = 0;
 	};
 
 	struct BoundTableRef {
@@ -138,7 +140,7 @@ namespace parser {
 			type = node_type;
 		}
 
-		void print() const override {
+		void Print() const override {
 			std::cout << "BoundDatabaseNode:\n";
 			std::cout << "  Type: " << ASTNode::typeToString(type) << "\n";
 			if (!database_name.empty()) {
@@ -165,7 +167,7 @@ namespace parser {
 			type = ASTNodeType::SELECT;
 		}
 
-		void print() const override {
+		void Print() const override {
 			std::cout << "BoundSelectNode:\n";
 			std::cout << "  Table: " << table_ref.table_name << " (ID: " << table_ref.table_id << ")\n";
 			std::cout << "  Projections: ";
@@ -204,7 +206,7 @@ namespace parser {
 			type = ASTNodeType::INSERT;
 		}
 
-		void print() const override {
+		void Print() const override {
 			std::cout << "BoundInsertNode:\n";
 			std::cout << "  Table: " << table_ref.table_name << " (ID: " << table_ref.table_id << ")\n";
 			std::cout << "  Columns: ";
@@ -240,7 +242,7 @@ namespace parser {
 			columns.push_back(column);
 		}
 
-		void print() const override {
+		void Print() const override {
 			std::cout << "BoundCreateTableNode:\n";
 			std::cout << "  Table: " << table_name << "\n";
 			std::cout << "  Columns:\n";
@@ -262,7 +264,7 @@ namespace parser {
 			type = ASTNodeType::DROP_TABLE;
 		}
 
-		void print() const override {
+		void Print() const override {
 			std::cout << "BoundDropTableNode:\n";
 			std::cout << "  Table: " << table_name << "\n";
 		}
@@ -273,7 +275,7 @@ namespace parser {
 			type = ASTNodeType::SHOW_TABLES;
 		}
 
-		void print() const override {
+		void Print() const override {
 			std::cout << "BoundShowTablesNode\n";
 		}
 	};
@@ -286,7 +288,7 @@ namespace parser {
 			type = ASTNodeType::EXEC;
 		}
 
-		void print() const override {
+		void Print() const override {
 			std::cout << "BoundExecNode:\n";
 			std::cout << "  Query: " << query << "\n";
 		}

@@ -59,9 +59,193 @@
  *                  → FILTER(condition="age > 30")
  *                       → SEQ_SCAN(table=employees)
  *
+ * SELECT e.name, d.name FROM employees e JOIN departments d ON e.department_id = d.id
+ *   → PROJECTION(columns=[e.name, d.name])
+ *        → JOIN(condition="e.department_id = d.id")
+ *             → SEQ_SCAN(table=employees, alias=e)
+ *             → SEQ_SCAN(table=departments, alias=d)
+ * 
  * INSERT INTO employees (name, age) VALUES ('Alice', 30)
  *   → INSERT(table=employees, columns=[name, age], values=[["Alice", "30"]])
  *
  * UPDATE employees SET age=31 WHERE name='Alice'
  *   → UPDATE(table=employees, set_clauses={age=31}, condition="name='Alice'")
  */
+
+#pragma once
+
+#include "common/types.h"
+#include "parser/ast.h"
+#include <memory>
+#include <vector>
+
+using namespace venus::parser;
+
+namespace venus {
+namespace planner {
+
+	class PlanNode;
+	class Planner;
+
+	class PlanNode {
+	public:
+		PlanNodeType type_;
+		std::vector<std::unique_ptr<PlanNode>> children_;
+
+		explicit PlanNode(PlanNodeType type)
+		    : type_(type) { }
+
+		virtual ~PlanNode() = default;
+
+		void AddChild(std::unique_ptr<PlanNode> child) {
+			children_.push_back(std::move(child));
+		}
+
+		PlanNodeType GetType() const { return type_; }
+
+		virtual void Print(int depth = 0) const = 0;
+	};
+
+	class SeqScanPlanNode : public PlanNode {
+	public:
+		table_id_t table_id_;
+		std::string table_name_;
+
+		SeqScanPlanNode(table_id_t table_id, const std::string& table_name)
+		    : PlanNode(PlanNodeType::SEQ_SCAN)
+		    , table_id_(table_id)
+		    , table_name_(table_name) { }
+
+		void Print(int depth = 0) const override {
+			for (int i = 0; i < depth; i++)
+				std::cout << "  ";
+			std::cout << "SeqScan(table=" << table_name_ << ", id=" << table_id_ << ")\n";
+		}
+	};
+
+	class ProjectionPlanNode : public PlanNode {
+	public:
+		std::vector<column_id_t> column_ids_;
+		std::vector<std::string> column_names_;
+
+		ProjectionPlanNode(const std::vector<column_id_t>& column_ids,
+		    const std::vector<std::string>& column_names)
+		    : PlanNode(PlanNodeType::PROJECTION)
+		    , column_ids_(column_ids)
+		    , column_names_(column_names) { }
+
+		void Print(int depth = 0) const override {
+			for (int i = 0; i < depth; i++)
+				std::cout << "  ";
+			std::cout << "Projection(columns=[";
+			for (size_t i = 0; i < column_names_.size(); i++) {
+				std::cout << column_names_[i];
+				if (i < column_names_.size() - 1)
+					std::cout << ", ";
+			}
+			std::cout << "])\n";
+			for (const auto& child : children_) {
+				child->Print(depth + 1);
+			}
+		}
+	};
+
+	class InsertPlanNode : public PlanNode {
+	public:
+		table_id_t table_id_;
+		std::string table_name_;
+		std::vector<std::string> values_;
+
+		InsertPlanNode(table_id_t table_id, const std::string& table_name,
+		    const std::vector<std::string>& values)
+		    : PlanNode(PlanNodeType::INSERT)
+		    , table_id_(table_id)
+		    , table_name_(table_name)
+		    , values_(values) { }
+
+		void Print(int depth = 0) const override {
+			for (int i = 0; i < depth; i++)
+				std::cout << "  ";
+			std::cout << "Insert(table=" << table_name_ << ", values=[";
+			for (size_t i = 0; i < values_.size(); i++) {
+				std::cout << values_[i];
+				if (i < values_.size() - 1)
+					std::cout << ", ";
+			}
+			std::cout << "])\n";
+		}
+	};
+
+	class CreateTablePlanNode : public PlanNode {
+	public:
+		std::string table_name_;
+		Schema schema_;
+
+		CreateTablePlanNode(const std::string& table_name, const Schema& schema)
+		    : PlanNode(PlanNodeType::CREATE_TABLE)
+		    , table_name_(table_name)
+		    , schema_(schema) { }
+
+		void Print(int depth = 0) const override {
+			for (int i = 0; i < depth; i++)
+				std::cout << "  ";
+			std::cout << "CreateTable(table=" << table_name_ << ", columns=" << schema_.GetColumnCount() << ")\n";
+		}
+	};
+
+	class DatabaseOpPlanNode : public PlanNode {
+	public:
+		std::string database_name_;
+
+		DatabaseOpPlanNode(PlanNodeType type, const std::string& database_name = "")
+		    : PlanNode(type)
+		    , database_name_(database_name) { }
+
+		void Print(int depth = 0) const override {
+			for (int i = 0; i < depth; i++)
+				std::cout << "  ";
+			std::cout << GetOperation() << "(";
+			if (!database_name_.empty()) {
+				std::cout << "database=" << database_name_;
+			}
+			std::cout << ")\n";
+		}
+
+	private:
+		std::string GetOperation() const {
+			switch (type_) {
+			case PlanNodeType::CREATE_DATABASE:
+				return "CreateDatabase";
+			case PlanNodeType::DROP_DATABASE:
+				return "DropDatabase";
+			case PlanNodeType::USE_DATABASE:
+				return "UseDatabase";
+			case PlanNodeType::SHOW_DATABASES:
+				return "ShowDatabases";
+			case PlanNodeType::SHOW_TABLES:
+				return "ShowTables";
+			default:
+				return "DatabaseOp";
+			}
+		}
+	};
+
+	class Planner {
+	public:
+		Planner() = default;
+		~Planner() = default;
+
+		std::unique_ptr<PlanNode> Plan(std::unique_ptr<BoundASTNode> bound_ast);
+
+	private:
+		std::unique_ptr<PlanNode> CreateSelectPlan(BoundSelectNode* select_node);
+		std::unique_ptr<PlanNode> CreateInsertPlan(BoundInsertNode* insert_node);
+		std::unique_ptr<PlanNode> CreateCreateTablePlan(BoundCreateTableNode* create_table_node);
+
+		std::unique_ptr<PlanNode> CreateDatabaseOpPlan(BoundDatabaseNode* database_node);
+		std::unique_ptr<PlanNode> CreateShowTablesPlan(BoundShowTablesNode* show_tables_node);
+		std::unique_ptr<PlanNode> CreateDropTablePlan(BoundDropTableNode* drop_table_node);
+	};
+
+} // namespace planner
+} // namespace venus

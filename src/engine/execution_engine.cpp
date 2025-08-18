@@ -3,10 +3,11 @@
 #include <iostream>
 #include <sstream>
 
-#include "executor/execution_engine.h"
+#include "engine/execution_engine.h"
 
 using namespace venus::parser;
 using namespace venus::binder;
+using namespace venus::planner;
 
 namespace venus {
 namespace executor {
@@ -27,12 +28,11 @@ namespace executor {
 				return false;
 			}
 
-			ast->print();
-
 			auto bounded_ast = binder_.Bind(std::move(ast));
 
-			std::cout << std::endl;
-			bounded_ast->print();
+			auto plan = planner_.Plan(std::move(bounded_ast));
+
+			plan->Print();
 
 		} catch (const std::exception& e) {
 			std::cout << e.what() << std::endl;

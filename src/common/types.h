@@ -135,4 +135,41 @@ enum class ASTNodeType : uint8_t {
 	EXIT,
 	EXEC
 };
+
+enum class PlanNodeType : uint8_t {
+	INVALID_PLAN = 0,
+	
+	SEQ_SCAN,      
+	INDEX_SCAN,    
+	
+	PROJECTION,
+	FILTER,
+	
+	NESTED_LOOP_JOIN,
+
+	AGGREGATION,
+	SORT,
+	LIMIT,
+	
+	// DML
+	INSERT,
+	UPDATE,
+	DELETE,
+
+	// DDL
+	CREATE_DATABASE,
+	DROP_DATABASE,
+	USE_DATABASE,
+	CREATE_TABLE,
+	DROP_TABLE,
+	CREATE_INDEX,
+	DROP_INDEX,
+	
+	SHOW_DATABASES,
+	SHOW_TABLES,
+	HELP,
+	EXIT,
+	EXEC_FILE
+};
+
 }

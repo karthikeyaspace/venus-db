@@ -22,7 +22,8 @@ namespace binder {
 		case ASTNodeType::CREATE_DATABASE:
 		case ASTNodeType::DROP_DATABASE:
 		case ASTNodeType::USE_DATABASE: {
-			// In general, data about databases is also stored in a master table, but venus does not do that
+			// In general, metadata about databases is also stored in a master table, but venus does not do that
+			// venus only stores metadata of tables and columns
 			// So we dont need catalog here, just Bind and send to next step,
 			// Its processing is taken care of by executor, this is just a bindere
 
