@@ -64,7 +64,7 @@ public:
 	Schema() = default;
 	~Schema() = default;
 
-	// Columns are added in an order, for tuple serialization and deserialization
+	// columns are added in an order, for tuple serialization and deserialization
 	void AddColumn(const std::string& name, ColumnType type, bool is_primary, size_t ordinal_position) {
 		if (column_name_to_index_.find(name) != column_name_to_index_.end()) {
 			throw std::invalid_argument("Column with name '" + name + "' already exists in the schema.");

@@ -19,6 +19,8 @@
  * For Venus DB, We will consider Logical and Physical plan as a single entity `Plan`
  * The generator Plan goes through executor as Iterator model (Open, Close, Next)
  *
+ * Imp: Binder creates important references like TableRef, ColumnRef, Schema
+ * which are needed to be reused by planner and by executor
  *
  *
  * Relational Algebra Operators:
@@ -64,7 +66,7 @@
  *        → JOIN(condition="e.department_id = d.id")
  *             → SEQ_SCAN(table=employees, alias=e)
  *             → SEQ_SCAN(table=departments, alias=d)
- * 
+ *
  * INSERT INTO employees (name, age) VALUES ('Alice', 30)
  *   → INSERT(table=employees, columns=[name, age], values=[["Alice", "30"]])
  *
@@ -108,13 +110,16 @@ namespace planner {
 
 	class SeqScanPlanNode : public PlanNode {
 	public:
+		// a lot redundencies now between binder and planner, but move on for now
 		table_id_t table_id_;
 		std::string table_name_;
+		Schema* schema_;
 
-		SeqScanPlanNode(table_id_t table_id, const std::string& table_name)
+		SeqScanPlanNode(TableRef table_ref)
 		    : PlanNode(PlanNodeType::SEQ_SCAN)
-		    , table_id_(table_id)
-		    , table_name_(table_name) { }
+		    , table_id_(table_ref.table_id)
+		    , table_name_(table_ref.table_name)
+		    , schema_(table_ref.schema) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
@@ -125,22 +130,19 @@ namespace planner {
 
 	class ProjectionPlanNode : public PlanNode {
 	public:
-		std::vector<column_id_t> column_ids_;
-		std::vector<std::string> column_names_;
+		std::vector<ColumnRef> column_refs_;
 
-		ProjectionPlanNode(const std::vector<column_id_t>& column_ids,
-		    const std::vector<std::string>& column_names)
+		ProjectionPlanNode(const std::vector<ColumnRef>& column_refs)
 		    : PlanNode(PlanNodeType::PROJECTION)
-		    , column_ids_(column_ids)
-		    , column_names_(column_names) { }
+		    , column_refs_(column_refs) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
 				std::cout << "  ";
 			std::cout << "Projection(columns=[";
-			for (size_t i = 0; i < column_names_.size(); i++) {
-				std::cout << column_names_[i];
-				if (i < column_names_.size() - 1)
+			for (size_t i = 0; i < column_refs_.size(); i++) {
+				std::cout << column_refs_[i].GetName();
+				if (i < column_refs_.size() - 1)
 					std::cout << ", ";
 			}
 			std::cout << "])\n";
@@ -152,24 +154,24 @@ namespace planner {
 
 	class InsertPlanNode : public PlanNode {
 	public:
-		table_id_t table_id_;
-		std::string table_name_;
-		std::vector<std::string> values_;
+		TableRef table_ref;
+		std::vector<ColumnRef> target_cols;
+		std::vector<ConstantType> values;
 
-		InsertPlanNode(table_id_t table_id, const std::string& table_name,
-		    const std::vector<std::string>& values)
+		InsertPlanNode(TableRef table_ref, const std::vector<ColumnRef>& target_cols,
+		    const std::vector<ConstantType>& values)
 		    : PlanNode(PlanNodeType::INSERT)
-		    , table_id_(table_id)
-		    , table_name_(table_name)
-		    , values_(values) { }
+		    , table_ref(table_ref)
+		    , target_cols(target_cols)
+		    , values(values) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
 				std::cout << "  ";
-			std::cout << "Insert(table=" << table_name_ << ", values=[";
-			for (size_t i = 0; i < values_.size(); i++) {
-				std::cout << values_[i];
-				if (i < values_.size() - 1)
+			std::cout << "Insert(table=" << table_ref.table_name << ", values=[";
+			for (size_t i = 0; i < values.size(); i++) {
+				std::cout << values[i].value.c_str();
+				if (i < values.size() - 1)
 					std::cout << ", ";
 			}
 			std::cout << "])\n";
@@ -189,7 +191,13 @@ namespace planner {
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
 				std::cout << "  ";
-			std::cout << "CreateTable(table=" << table_name_ << ", columns=" << schema_.GetColumnCount() << ")\n";
+			std::cout << "CreateTable(table=" << table_name_ << ", columns=[";
+			for (size_t i = 0; i < schema_.GetColumnCount(); i++) {
+				std::cout << schema_.GetColumn(i).GetName();
+				if (i < schema_.GetColumnCount() - 1)
+					std::cout << ", ";
+			}
+			std::cout << "])\n";
 		}
 	};
 

@@ -51,9 +51,9 @@ namespace binder {
 				throw std::runtime_error("Binder error: Could not retrieve schema for table '" + table_name + "'");
 			}
 
-			BoundTableRef bound_table(table_id, table_name, *table_schema);
+			TableRef bound_table(table_id, table_name, table_schema);
 
-			std::vector<BoundColumnRef> bound_columns;
+			std::vector<ColumnRef> bound_columns;
 			auto projection_list = ast->children[0];
 
 			for (const auto& projection : projection_list->children) {
@@ -61,7 +61,7 @@ namespace binder {
 					// SELECT * - add all columns from the table
 					for (size_t i = 0; i < table_schema->GetColumnCount(); i++) {
 						const Column& column = table_schema->GetColumn(i);
-						BoundColumnRef bound_col;
+						ColumnRef bound_col;
 						bound_col.col_id = static_cast<column_id_t>(i);
 						bound_col.column_entry_ = const_cast<Column*>(&column);
 						bound_columns.push_back(bound_col);
@@ -73,7 +73,7 @@ namespace binder {
 					}
 
 					const Column& column = table_schema->GetColumn(col_name);
-					BoundColumnRef bound_col;
+					ColumnRef bound_col;
 					bound_col.col_id = static_cast<column_id_t>(column.GetOrdinalPosition());
 					bound_col.column_entry_ = const_cast<Column*>(&column);
 					bound_columns.push_back(bound_col);
@@ -123,13 +123,12 @@ namespace binder {
 						throw std::runtime_error("Binder error: Unsupported column type: " + col_type_str);
 					}
 
-					size_t ordinal_position = bound_create_table->columns.size();
-					Column column(col_name, col_type, is_primary, ordinal_position);
-					bound_create_table->add_column(column);
+					size_t ordinal_position = bound_create_table->schema.GetColumnCount();
+					bound_create_table->schema.AddColumn(col_name, col_type, is_primary, ordinal_position);
 				}
 			}
 
-			if (bound_create_table->columns.empty()) {
+			if (bound_create_table->schema.GetColumnCount() == 0) {
 				throw std::runtime_error("Binder error: CREATE TABLE must have at least one column");
 			}
 
@@ -150,18 +149,18 @@ namespace binder {
 				throw std::runtime_error("Binder error: Could not retrieve schema for table '" + table_name + "'");
 			}
 
-			BoundTableRef bound_table(table_id, table_name, *table_schema);
+			TableRef bound_table(table_id, table_name, table_schema);
 
-			std::vector<BoundColumnRef> target_cols;
+			std::vector<ColumnRef> target_cols;
 			for (size_t i = 0; i < table_schema->GetColumnCount(); i++) {
 				const Column& column = table_schema->GetColumn(i);
-				BoundColumnRef bound_col;
+				ColumnRef bound_col;
 				bound_col.col_id = static_cast<column_id_t>(i);
 				bound_col.column_entry_ = const_cast<Column*>(&column);
 				target_cols.push_back(bound_col);
 			}
 
-			std::vector<BoundConstant> bound_values;
+			std::vector<ConstantType> bound_values;
 			for (const auto& child : ast->children) {
 				if (child->type == ASTNodeType::CONST_VALUE) {
 					std::string value_str = child->value;
@@ -174,7 +173,7 @@ namespace binder {
 					const Column& target_column = table_schema->GetColumn(value_index);
 					ColumnType expected_type = target_column.GetType();
 
-					BoundConstant bound_const;
+					ConstantType bound_const;
 					bound_const.value = value_str;
 					bound_const.type = expected_type;
 
