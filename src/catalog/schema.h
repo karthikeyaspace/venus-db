@@ -23,9 +23,15 @@
 #include <vector>
 
 #include "common/config.h"
-#include "common/types.h"
 
 namespace venus {
+
+enum class ColumnType : uint8_t {
+	INVALID_COLUMN = 0,
+	INT,
+	FLOAT,
+	CHAR
+};
 
 class Column {
 public:

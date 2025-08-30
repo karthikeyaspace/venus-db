@@ -49,6 +49,7 @@
 
 #pragma once
 
+#include "buffer/buffer_pool.h"
 #include "catalog/catalog.h"
 #include "common/types.h"
 #include "planner/planner.h"
@@ -65,14 +66,20 @@ namespace executor {
 	class ExecutorContext;
 	class ExecutionEngine;
 
-	class ExecutorContext {
+	class AbstractExecutor {
 	public:
-		catalog::CatalogManager* catalog_manager_;
-		table::TableHeap* table_heap_;
+		explicit AbstractExecutor(ExecutorContext* context)
+		    : context_(context) { }
+		virtual ~AbstractExecutor() = default;
 
-		ExecutorContext(catalog::CatalogManager* catalog, table::TableHeap* heap)
-		    : catalog_manager_(catalog)
-		    , table_heap_(heap) { }
+		virtual void Open() = 0;
+		virtual bool Next(Tuple* tuple) = 0;
+		virtual void Close() = 0;
+
+		virtual const Schema& GetOutputSchema() const = 0;
+
+	protected:
+		ExecutorContext* context_;
 	};
 
 	class TupleSet {
@@ -87,8 +94,8 @@ namespace executor {
 			tuples_.push_back(tuple);
 		}
 
-		size_t Size() const { return tuples_.size(); }
-		bool Empty() const { return tuples_.empty(); }
+		size_t GetSize() const { return tuples_.size(); }
+		bool IsEmpty() const { return tuples_.empty(); }
 
 		const Schema& GetSchema() const { return schema_; }
 		const std::vector<Tuple>& GetTuples() const { return tuples_; }
@@ -98,12 +105,12 @@ namespace executor {
 	public:
 		bool success_;
 		std::string message_;
-		std::unique_ptr<TupleSet> result_set_;
+		std::unique_ptr<TupleSet> data_;
 
 		ResultSet(bool success, const std::string& message = "")
 		    : success_(success)
 		    , message_(message)
-		    , result_set_(nullptr) { }
+		    , data_(nullptr) { }
 
 		static ResultSet Success(const std::string& message = "") {
 			return ResultSet(true, message);
@@ -115,35 +122,48 @@ namespace executor {
 
 		static ResultSet Data(std::unique_ptr<TupleSet> data) {
 			ResultSet result(true);
-			result.result_set_ = std::move(data);
+			result.data_ = std::move(data);
 			return result;
 		}
 	};
 
-	class ExecutionEngine {
+	class ExecutorContext {
 	public:
-		explicit ExecutionEngine(ExecutorContext* context)
-		    : context_(context) { }
+		catalog::CatalogManager* catalog_manager_;
+		buffer::BufferPoolManager* bpm_;
 
-		// recursively processes plan
-		ResultSet Execute(const planner::PlanNode* plan);
+		ExecutorContext(catalog::CatalogManager* catalog, buffer::BufferPoolManager* bpm)
+		    : catalog_manager_(catalog)
+		    , bpm_(bpm) { }
+	};
+
+	class Executor {
+	public:
+		Executor() = default;
+
+		// volcano driver
+		ResultSet ExecutePlan(const planner::PlanNode* plan);
+
+		void SetContext(buffer::BufferPoolManager* bpm, catalog::CatalogManager* catalog) {
+			context_ = new ExecutorContext(catalog, bpm);
+		}
+
+		void PrintResultSet(const ResultSet& result_set) {
+			if (result_set.success_) {
+				std::cout << result_set.message_ << std::endl;
+				if (result_set.data_) {
+					const auto& tuples = result_set.data_->GetTuples();
+					std::cout << "Retrieved " << tuples.size() << " rows." << std::endl;
+				}
+			} else {
+				std::cout << "Failed to execute query: " << result_set.message_ << std::endl;
+			}
+		}
 
 	private:
 		ExecutorContext* context_;
 
-		ResultSet ExecuteSeqScan(const planner::SeqScanPlanNode* plan);
-		ResultSet ExecuteProjection(const planner::ProjectionPlanNode* plan);
-		ResultSet ExecuteInsert(const planner::InsertPlanNode* plan);
-		ResultSet ExecuteCreateTable(const planner::CreateTablePlanNode* plan);
-		ResultSet ExecuteDatabaseOp(const planner::DatabaseOpPlanNode* plan);
-
-		std::unique_ptr<TupleSet> ProjectTuples(const TupleSet& input,
-		    const std::vector<column_id_t>& column_ids,
-		    const std::vector<std::string>& column_names);
-
-		Schema CreateProjectionSchema(const Schema& input_schema,
-		    const std::vector<column_id_t>& column_ids,
-		    const std::vector<std::string>& column_names);
+		std::unique_ptr<AbstractExecutor> BuildExecutorTree(const planner::PlanNode* plan);
 	};
 
 } // namespace executor

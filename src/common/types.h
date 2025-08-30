@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "common/config.h"
+#include "catalog/schema.h"
 
 namespace venus {
 
@@ -19,12 +20,54 @@ enum class PageType : uint8_t {
 	INDEX_INTERNAL_PAGE,
 };
 
-enum class ColumnType : uint8_t {
-	INVALID_COLUMN = 0,
-	INT,
-	FLOAT,
-	CHAR
+struct TableRef {
+	table_id_t table_id;
+	std::string table_name;
+	Schema* schema;
+
+	TableRef(table_id_t id_, const std::string& name_, Schema* schema_)
+	    : table_id(id_)
+	    , table_name(name_)
+	    , schema(schema_) { }
+
+	const Column& GetColumnByName(const std::string& name) const {
+		return schema->GetColumn(name);
+	}
+
+	const Column& GetColumnByIndex(size_t index) const {
+		return schema->GetColumn(index);
+	}
+
+	const table_id_t GetTableId() const {
+		return table_id;
+	}
+
+	const Schema& GetSchema() const {
+		return *schema;
+	}
 };
+
+struct ColumnRef {
+	column_id_t col_id;
+	Column* column_entry_;
+
+	const std::string& GetName() const {
+		return column_entry_->GetName();
+	}
+};
+
+struct ConstantType {
+	std::string value;
+	ColumnType type;
+};
+
+struct Expression {
+	// for now this struct only supports simple equality (=, <, >, <=, >=)
+	ColumnRef left;
+	std::string op;
+	ConstantType right;
+};
+
 
 // Lexer token types
 enum class TokenType : uint8_t {
@@ -138,19 +181,19 @@ enum class ASTNodeType : uint8_t {
 
 enum class PlanNodeType : uint8_t {
 	INVALID_PLAN = 0,
-	
-	SEQ_SCAN,      
-	INDEX_SCAN,    
-	
+
+	SEQ_SCAN,
+	INDEX_SCAN,
+
 	PROJECTION,
 	FILTER,
-	
+
 	NESTED_LOOP_JOIN,
 
 	AGGREGATION,
 	SORT,
 	LIMIT,
-	
+
 	// DML
 	INSERT,
 	UPDATE,
@@ -164,7 +207,7 @@ enum class PlanNodeType : uint8_t {
 	DROP_TABLE,
 	CREATE_INDEX,
 	DROP_INDEX,
-	
+
 	SHOW_DATABASES,
 	SHOW_TABLES,
 	HELP,

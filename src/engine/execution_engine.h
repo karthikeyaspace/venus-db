@@ -31,6 +31,8 @@
 #include "common/config.h"
 #include "parser/parser.h"
 #include "planner/planner.h"
+#include "executor/executor.h"
+#include "storage/tuple.h"
 #include "table/table_heap.h"
 
 #include <functional>
@@ -69,6 +71,7 @@ namespace executor {
 		parser::Parser parser_;
 		binder::Binder binder_;
 		planner::Planner planner_;
+		executor::Executor executor_;
 
 		std::function<void(const std::string&)> init_callback_;
 		std::function<void()> stop_db_callback_;

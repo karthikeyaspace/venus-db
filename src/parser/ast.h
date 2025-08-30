@@ -90,46 +90,6 @@ namespace parser {
 		ASTNodeType GetType() const { return type; }
 	};
 
-	struct TableRef {
-		table_id_t table_id;
-		std::string table_name;
-		Schema *schema;
-
-		TableRef(table_id_t id_, const std::string& name_, Schema *schema_)
-		    : table_id(id_)
-		    , table_name(name_)
-		    , schema(schema_) { }
-
-		const Column& GetColumnByName(const std::string& name) const {
-			return schema->GetColumn(name);
-		}
-
-		const Column& GetColumnByIndex(size_t index) const {
-			return schema->GetColumn(index);
-		}
-	};
-
-	struct ColumnRef {
-		column_id_t col_id;
-		Column* column_entry_;
-
-		const std::string& GetName() const {
-			return column_entry_->GetName();
-		}
-	};
-
-	struct ConstantType {
-		std::string value;
-		ColumnType type;
-	};
-
-	struct Expression {
-		// for now this struct only supports simple equality (=, <, >, <=, >=)
-		ColumnRef left;
-		std::string op;
-		ConstantType right;
-	};
-
 	struct BoundDatabaseNode : BoundASTNode {
 		// Bound node for CREATE/DROP/SHOW/USE DATABASE commands
 		std::string database_name;

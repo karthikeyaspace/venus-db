@@ -8,6 +8,7 @@
 using namespace venus::parser;
 using namespace venus::binder;
 using namespace venus::planner;
+using namespace venus::executor;
 
 namespace venus {
 namespace executor {
@@ -32,7 +33,11 @@ namespace executor {
 
 			auto plan = planner_.Plan(std::move(bounded_ast));
 
-			plan->Print();
+			planner_.PrintPlan(plan);
+
+			// auto result_set = executor_.ExecutePlan(plan.get());
+
+			// executor_.PrintResultSet(result_set);
 
 		} catch (const std::exception& e) {
 			std::cout << e.what() << std::endl;

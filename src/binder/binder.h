@@ -20,6 +20,7 @@
 
 #include "catalog/catalog.h"
 #include "parser/ast.h"
+#include "common/types.h"
 
 namespace venus {
 namespace binder {

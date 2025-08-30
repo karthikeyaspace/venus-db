@@ -19,11 +19,14 @@ namespace planner {
 				throw std::runtime_error("Planner error: Null select node");
 			}
 
-			auto scan_plan = std::make_unique<SeqScanPlanNode>(select_node->table_ref);
+			auto scan_plan = std::make_unique<SeqScanPlanNode>(&select_node->table_ref);
 
 			auto projection_plan = std::make_unique<ProjectionPlanNode>(select_node->projections);
 
 			projection_plan->AddChild(std::move(scan_plan));
+
+			// where clause and limit will come under filter -> TODO
+			// can also add joins, aggregations, sorting
 
 			return std::move(projection_plan);
 		}
@@ -35,7 +38,7 @@ namespace planner {
 			}
 
 			return std::make_unique<InsertPlanNode>(
-			    insert_node->table_ref,
+			    &insert_node->table_ref,
 			    insert_node->target_cols,
 			    insert_node->values);
 		}
@@ -98,7 +101,7 @@ namespace planner {
 				throw std::runtime_error("Planner error: Null drop table node");
 			}
 
-			return std::make_unique<DatabaseOpPlanNode>(PlanNodeType::DROP_TABLE, drop_table_node->table_name);
+			return std::make_unique<DropTablePlanNode>(drop_table_node->table_name);
 		}
 
 		default:
