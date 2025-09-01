@@ -40,18 +40,10 @@ namespace binder {
 
 			const std::string& table_name = ast->children[1]->value;
 
-			table_id_t table_id = catalog_->TableExists(table_name);
-			if (table_id == -1) {
+			TableRef* bound_table = catalog_->GetTableRef(table_name);
+			if (bound_table == nullptr) {
 				throw std::runtime_error("Binder error: Table '" + table_name + "' does not exist");
 			}
-
-			// Get the table schema
-			Schema* table_schema = catalog_->GetTableSchema(table_id);
-			if (table_schema == nullptr) {
-				throw std::runtime_error("Binder error: Could not retrieve schema for table '" + table_name + "'");
-			}
-
-			TableRef bound_table(table_id, table_name, table_schema);
 
 			std::vector<ColumnRef> bound_columns;
 			auto projection_list = ast->children[0];
@@ -59,8 +51,8 @@ namespace binder {
 			for (const auto& projection : projection_list->children) {
 				if (projection->value == "*") {
 					// SELECT * - add all columns from the table
-					for (size_t i = 0; i < table_schema->GetColumnCount(); i++) {
-						const Column& column = table_schema->GetColumn(i);
+					for (size_t i = 0; i < bound_table->GetSchema()->GetColumnCount(); i++) {
+						const Column& column = bound_table->GetSchema()->GetColumn(i);
 						ColumnRef bound_col;
 						bound_col.col_id = static_cast<column_id_t>(i);
 						bound_col.column_entry_ = const_cast<Column*>(&column);
@@ -68,11 +60,11 @@ namespace binder {
 					}
 				} else {
 					const std::string& col_name = projection->value;
-					if (!table_schema->HasColumn(col_name)) {
+					if (!bound_table->GetSchema()->HasColumn(col_name)) {
 						throw std::runtime_error("Binder error: Column '" + col_name + "' does not exist in table '" + table_name + "'");
 					}
 
-					const Column& column = table_schema->GetColumn(col_name);
+					const Column& column = bound_table->GetSchema()->GetColumn(col_name);
 					ColumnRef bound_col;
 					bound_col.col_id = static_cast<column_id_t>(column.GetOrdinalPosition());
 					bound_col.column_entry_ = const_cast<Column*>(&column);
@@ -86,8 +78,9 @@ namespace binder {
 		case ASTNodeType::CREATE_TABLE: {
 			const std::string& table_name = ast->value;
 
-			if (catalog_->TableExists(table_name) != -1) {
-				throw std::runtime_error("Binder error: Table '" + table_name + "' already exists");
+			TableRef* bound_table = catalog_->GetTableRef(table_name);
+			if (bound_table == nullptr) {
+				throw std::runtime_error("Binder error: Table '" + table_name + "' does not exist");
 			}
 
 			auto bound_create_table = std::make_unique<BoundCreateTableNode>(table_name);
@@ -138,22 +131,14 @@ namespace binder {
 		case ASTNodeType::INSERT: {
 			const std::string& table_name = ast->value;
 
-			table_id_t table_id = catalog_->TableExists(table_name);
-			if (table_id == -1) {
+			TableRef* bound_table = catalog_->GetTableRef(table_name);
+			if (bound_table == nullptr) {
 				throw std::runtime_error("Binder error: Table '" + table_name + "' does not exist");
 			}
 
-			// Get the table schema
-			Schema* table_schema = catalog_->GetTableSchema(table_id);
-			if (table_schema == nullptr) {
-				throw std::runtime_error("Binder error: Could not retrieve schema for table '" + table_name + "'");
-			}
-
-			TableRef bound_table(table_id, table_name, table_schema);
-
 			std::vector<ColumnRef> target_cols;
-			for (size_t i = 0; i < table_schema->GetColumnCount(); i++) {
-				const Column& column = table_schema->GetColumn(i);
+			for (size_t i = 0; i < bound_table->GetSchema()->GetColumnCount(); i++) {
+				const Column& column = bound_table->GetSchema()->GetColumn(i);
 				ColumnRef bound_col;
 				bound_col.col_id = static_cast<column_id_t>(i);
 				bound_col.column_entry_ = const_cast<Column*>(&column);
@@ -166,11 +151,11 @@ namespace binder {
 					std::string value_str = child->value;
 
 					size_t value_index = bound_values.size();
-					if (value_index >= table_schema->GetColumnCount()) {
+					if (value_index >= bound_table->GetSchema()->GetColumnCount()) {
 						throw std::runtime_error("Binder error: Too many values provided for INSERT");
 					}
 
-					const Column& target_column = table_schema->GetColumn(value_index);
+					const Column& target_column = bound_table->GetSchema()->GetColumn(value_index);
 					ColumnType expected_type = target_column.GetType();
 
 					ConstantType bound_const;
@@ -206,8 +191,8 @@ namespace binder {
 				}
 			}
 
-			if (bound_values.size() != table_schema->GetColumnCount()) {
-				throw std::runtime_error("Binder error: Number of values (" + std::to_string(bound_values.size()) + ") does not match number of columns (" + std::to_string(table_schema->GetColumnCount()) + ")");
+			if (bound_values.size() != bound_table->GetSchema()->GetColumnCount()) {
+				throw std::runtime_error("Binder error: Number of values (" + std::to_string(bound_values.size()) + ") does not match number of columns (" + std::to_string(bound_table->GetSchema()->GetColumnCount()) + ")");
 			}
 
 			return std::make_unique<BoundInsertNode>(bound_table, std::move(target_cols), std::move(bound_values));
@@ -215,9 +200,12 @@ namespace binder {
 
 		case ASTNodeType::DROP_TABLE: {
 			const std::string& table_name = ast->value;
-			if (catalog_->TableExists(table_name) == -1) {
+			
+			TableRef* bound_table = catalog_->GetTableRef(table_name);
+			if (bound_table == nullptr) {
 				throw std::runtime_error("Binder error: Table '" + table_name + "' does not exist");
 			}
+
 			return std::make_unique<BoundDropTableNode>(table_name);
 		}
 

@@ -8,8 +8,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "common/config.h"
 #include "catalog/schema.h"
+#include "common/config.h"
 
 namespace venus {
 
@@ -22,11 +22,13 @@ enum class PageType : uint8_t {
 
 struct TableRef {
 	table_id_t table_id;
+	page_id_t first_page_id;
 	std::string table_name;
 	Schema* schema;
 
-	TableRef(table_id_t id_, const std::string& name_, Schema* schema_)
+	TableRef(table_id_t id_, page_id_t first_page_id_, const std::string& name_, Schema* schema_)
 	    : table_id(id_)
+	    , first_page_id(first_page_id_)
 	    , table_name(name_)
 	    , schema(schema_) { }
 
@@ -42,8 +44,12 @@ struct TableRef {
 		return table_id;
 	}
 
-	const Schema& GetSchema() const {
-		return *schema;
+	const page_id_t GetFirstPageId() const {
+		return first_page_id;
+	}
+
+	const Schema* GetSchema() const {
+		return schema;
 	}
 };
 
@@ -67,7 +73,6 @@ struct Expression {
 	std::string op;
 	ConstantType right;
 };
-
 
 // Lexer token types
 enum class TokenType : uint8_t {

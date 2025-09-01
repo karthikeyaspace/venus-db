@@ -69,7 +69,7 @@ namespace executor {
 	class AbstractExecutor {
 	public:
 		explicit AbstractExecutor(ExecutorContext* context)
-		    : context_(context) { }
+		    : context_(context), table_heap_(nullptr) { }
 		virtual ~AbstractExecutor() = default;
 
 		virtual void Open() = 0;
@@ -80,14 +80,15 @@ namespace executor {
 
 	protected:
 		ExecutorContext* context_;
+		table::TableHeap* table_heap_;
 	};
 
 	class TupleSet {
 	public:
 		std::vector<Tuple> tuples_;
-		Schema schema_;
+		Schema *schema_;
 
-		TupleSet(const Schema& schema)
+		TupleSet(Schema* schema)
 		    : schema_(schema) { }
 
 		void AddTuple(const Tuple& tuple) {
@@ -97,7 +98,7 @@ namespace executor {
 		size_t GetSize() const { return tuples_.size(); }
 		bool IsEmpty() const { return tuples_.empty(); }
 
-		const Schema& GetSchema() const { return schema_; }
+			Schema* GetSchema() const { return schema_; }
 		const std::vector<Tuple>& GetTuples() const { return tuples_; }
 	};
 

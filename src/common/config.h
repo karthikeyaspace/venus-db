@@ -28,6 +28,7 @@ using table_id_t = uint32_t;
 using column_id_t = uint32_t;
 using index_id_t = uint32_t;
 
+constexpr table_id_t INVALID_TABLE_ID = std::numeric_limits<table_id_t>::max();
 constexpr page_id_t INVALID_PAGE_ID = std::numeric_limits<page_id_t>::max();
 constexpr frame_id_t INVALID_FRAME_ID = std::numeric_limits<frame_id_t>::max();
 

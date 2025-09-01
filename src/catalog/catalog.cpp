@@ -127,46 +127,40 @@ namespace catalog {
 		bpm_->FlushPage(first_page_id);
 	}
 
-	// access both tables, and create  a schema object
-	Schema* CatalogManager::GetTableSchema(table_id_t table_id) {
-		Schema* schema = new Schema();
+	TableRef* CatalogManager::GetTableRef(const std::string& table_name) {
+		table_id_t table_id = INVALID_TABLE_ID;
+		page_id_t first_page_id = INVALID_PAGE_ID;
+		column_id_t primary_key_col = INVALID_TABLE_ID;
 
+		for (auto it = tables_table_->begin(); it != tables_table_->end(); ++it) {
+			const Tuple& tuple = *it;
+			const char* value = tuple.GetValue(1, master_tables_schema_);
+			if (std::string(value) == table_name) {
+				table_id = static_cast<table_id_t>(std::stoi(GetValueAsString(tuple, 0, master_tables_schema_)));
+				first_page_id = static_cast<page_id_t>(std::stoi(GetValueAsString(tuple, 3, master_tables_schema_)));
+				primary_key_col = static_cast<column_id_t>(std::stoi(GetValueAsString(tuple, 4, master_tables_schema_)));
+				break;
+			}
+		}
+
+		if (table_id == -1) {
+			return nullptr;
+		}
+
+		Schema* schema = new Schema();
 		for (auto it = columns_table_->begin(); it != columns_table_->end(); ++it) {
 			const Tuple& tuple = *it;
-
-			// Get table_id from column 1 of master_columns
-			std::string tuple_table_id_str = GetValueAsString(tuple, 1, master_columns_schema_);
-			table_id_t tuple_table_id = static_cast<table_id_t>(std::stoi(tuple_table_id_str));
-
+			table_id_t tuple_table_id = static_cast<table_id_t>(std::stoi(GetValueAsString(tuple, 1, master_columns_schema_)));
 			if (tuple_table_id == table_id) {
 				const char* col_name = tuple.GetValue(2, master_columns_schema_);
-				std::string col_type_str = GetValueAsString(tuple, 3, master_columns_schema_);
-
-				if (col_type_str.empty()) {
-					continue; // Skip invalid entries
-				}
-
-				ColumnType col_type = static_cast<ColumnType>(std::stoi(col_type_str));
+				ColumnType col_type = static_cast<ColumnType>(std::stoi(GetValueAsString(tuple, 3, master_columns_schema_)));
 				size_t ordinal_position = std::stoi(GetValueAsString(tuple, 5, master_columns_schema_));
 				bool is_primary = std::stoi(GetValueAsString(tuple, 6, master_columns_schema_)) == 1;
-
 				schema->AddColumn(col_name, col_type, is_primary, ordinal_position);
 			}
 		}
 
-		return schema;
-	}
-
-	table_id_t CatalogManager::TableExists(const std::string& table_name) {
-		for (auto it = tables_table_->begin(); it != tables_table_->end(); ++it) {
-			const Tuple& tuple = *it;
-			const char* value = tuple.GetValue(1, master_tables_schema_); // Get table_name
-			if (std::string(value) == table_name) {
-				std::string table_id_str = GetValueAsString(tuple, 0, master_tables_schema_);
-				return static_cast<table_id_t>(std::stoi(table_id_str));
-			}
-		}
-		return -1;
+		return new TableRef(table_id, first_page_id, table_name, schema);
 	}
 
 	table_id_t CatalogManager::GetNextTableId() {

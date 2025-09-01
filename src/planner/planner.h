@@ -123,16 +123,9 @@ namespace planner {
 	public:
 		TableRef* table_ref_;
 
-		table::TableHeap* table_heap_;
-		std::unique_ptr<table::TableHeap::Iterator> iterator_;
-		std::unique_ptr<table::TableHeap::Iterator> end_iterator_;
-		bool is_open_;
-
 		explicit SeqScanPlanNode(TableRef* table_ref)
 		    : PlanNode(PlanNodeType::SEQ_SCAN)
-		    , table_ref_(table_ref)
-		    , table_heap_(nullptr)
-		    , is_open_(false) { }
+		    , table_ref_(table_ref) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
@@ -144,19 +137,10 @@ namespace planner {
 	class ProjectionPlanNode : public PlanNode {
 	public:
 		std::vector<ColumnRef> column_refs_;
-		Schema output_schema_;
 
 		ProjectionPlanNode(const std::vector<ColumnRef>& column_refs)
 		    : PlanNode(PlanNodeType::PROJECTION)
-		    , column_refs_(column_refs) {
-			for (const auto& col_ref : column_refs_) {
-				output_schema_.AddColumn(
-				    col_ref.GetName(),
-				    col_ref.column_entry_->GetType(),
-				    col_ref.column_entry_->IsPrimary(),
-				    output_schema_.GetColumnCount());
-			}
-		}
+		    , column_refs_(column_refs) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
@@ -179,15 +163,13 @@ namespace planner {
 		TableRef* table_ref;
 		std::vector<ColumnRef> target_cols;
 		std::vector<ConstantType> values;
-		bool executed_;
 
-		InsertPlanNode(TableRef *table_ref, const std::vector<ColumnRef>& target_cols,
+		InsertPlanNode(TableRef* table_ref, const std::vector<ColumnRef>& target_cols,
 		    const std::vector<ConstantType>& values)
 		    : PlanNode(PlanNodeType::INSERT)
 		    , table_ref(table_ref)
 		    , target_cols(target_cols)
-		    , values(values)
-		    , executed_(false) { }
+		    , values(values) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
@@ -206,13 +188,11 @@ namespace planner {
 	public:
 		std::string table_name_;
 		Schema schema_;
-		bool executed_;
 
 		CreateTablePlanNode(const std::string& table_name, const Schema& schema)
 		    : PlanNode(PlanNodeType::CREATE_TABLE)
 		    , table_name_(table_name)
-		    , schema_(schema)
-		    , executed_(false) { }
+		    , schema_(schema) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
@@ -230,12 +210,10 @@ namespace planner {
 	class DatabaseOpPlanNode : public PlanNode {
 	public:
 		std::string database_name_;
-		bool executed_;
 
 		DatabaseOpPlanNode(PlanNodeType type, const std::string& database_name = "")
 		    : PlanNode(type)
-		    , database_name_(database_name)
-		    , executed_(false) { }
+		    , database_name_(database_name) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
@@ -266,11 +244,8 @@ namespace planner {
 
 	class ShowTablesPlanNode : public PlanNode {
 	public:
-		bool executed_;
-
 		ShowTablesPlanNode()
-		    : PlanNode(PlanNodeType::SHOW_TABLES)
-		    , executed_(false) { }
+		    : PlanNode(PlanNodeType::SHOW_TABLES) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)
@@ -282,12 +257,10 @@ namespace planner {
 	class DropTablePlanNode : public PlanNode {
 	public:
 		std::string table_name_;
-		bool executed_;
 
 		DropTablePlanNode(const std::string& table_name)
 		    : PlanNode(PlanNodeType::DROP_TABLE)
-		    , table_name_(table_name)
-		    , executed_(false) { }
+		    , table_name_(table_name) { }
 
 		void Print(int depth = 0) const override {
 			for (int i = 0; i < depth; i++)

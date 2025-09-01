@@ -1,6 +1,7 @@
 // /src/executor/executor.cpp
 
 #include "executor/executor.h"
+#include "executor/operators.h"
 
 namespace venus {
 namespace executor {
@@ -65,11 +66,58 @@ namespace executor {
 			return rs;
 		}
 
-		return ResultSet::Success("Query executed successfully. " + std::to_string(num_rows) + " rows affected.");
+		return ResultSet::Success(std::to_string(num_rows) + " rows affected.");
 	}
 
 	std::unique_ptr<AbstractExecutor> Executor::BuildExecutorTree(const planner::PlanNode* plan) {
-	return nullptr;
+		if (!plan)
+			return nullptr;
+
+		switch (plan->type_) {
+		case PlanNodeType::SEQ_SCAN: {
+			auto p = static_cast<const planner::SeqScanPlanNode*>(plan);
+			return std::make_unique<SeqScanExecutor>(context_, p);
+		}
+		case PlanNodeType::PROJECTION: {
+			auto p = static_cast<const planner::ProjectionPlanNode*>(plan);
+			if (p->children_.size() != 1) {
+				throw std::runtime_error("Projection expects exactly one child");
+			}
+			auto child = BuildExecutorTree(p->children_[0].get());
+			return std::make_unique<ProjectionExecutor>(context_, p, std::move(child));
+		}
+
+		case PlanNodeType::INSERT: {
+			auto p = static_cast<const planner::InsertPlanNode*>(plan);
+			return std::make_unique<InsertExecutor>(context_, p);
+		}
+
+		case PlanNodeType::CREATE_TABLE: {
+			auto p = static_cast<const planner::CreateTablePlanNode*>(plan);
+			return std::make_unique<CreateTableExecutor>(context_, p);
+		}
+
+		case PlanNodeType::DROP_TABLE: {
+			auto p = static_cast<const planner::DropTablePlanNode*>(plan);
+			return std::make_unique<DropTableExecutor>(context_, p);
+		}
+
+		case PlanNodeType::CREATE_DATABASE:
+		case PlanNodeType::DROP_DATABASE:
+		case PlanNodeType::USE_DATABASE:
+		case PlanNodeType::SHOW_DATABASES: {
+			auto p = static_cast<const planner::DatabaseOpPlanNode*>(plan);
+			return std::make_unique<DatabaseOpExecutor>(context_, p);
+		}
+
+		case PlanNodeType::SHOW_TABLES: {
+			auto p = static_cast<const planner::ShowTablesPlanNode*>(plan);
+			return std::make_unique<ShowTablesExecutor>(context_, p);
+		}
+
+		default:
+			throw std::runtime_error("Executor: Unsupported plan node type");
+		}
 	}
 
 }

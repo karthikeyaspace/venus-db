@@ -19,7 +19,7 @@ namespace planner {
 				throw std::runtime_error("Planner error: Null select node");
 			}
 
-			auto scan_plan = std::make_unique<SeqScanPlanNode>(&select_node->table_ref);
+			auto scan_plan = std::make_unique<SeqScanPlanNode>(select_node->table_ref);
 
 			auto projection_plan = std::make_unique<ProjectionPlanNode>(select_node->projections);
 
@@ -38,7 +38,7 @@ namespace planner {
 			}
 
 			return std::make_unique<InsertPlanNode>(
-			    &insert_node->table_ref,
+			    insert_node->table_ref,
 			    insert_node->target_cols,
 			    insert_node->values);
 		}

@@ -101,13 +101,13 @@ namespace parser {
 	};
 
 	struct BoundSelectNode : BoundASTNode {
-		TableRef table_ref;
+		TableRef* table_ref;
 		std::vector<ColumnRef> projections;
 		std::unique_ptr<Expression> where_clause;
 		int limit;
 
 		BoundSelectNode(
-		    TableRef table,
+		    TableRef* table,
 		    std::vector<ColumnRef> cols,
 		    std::unique_ptr<Expression> where = nullptr,
 		    int limit_value = -1)
@@ -120,12 +120,12 @@ namespace parser {
 	};
 
 	struct BoundInsertNode : BoundASTNode {
-		TableRef table_ref;
+		TableRef *table_ref;
 		std::vector<ColumnRef> target_cols;
 		std::vector<ConstantType> values;
 
 		BoundInsertNode(
-		    TableRef table,
+		    TableRef *table,
 		    std::vector<ColumnRef> cols,
 		    std::vector<ConstantType> vals)
 		    : table_ref(table)

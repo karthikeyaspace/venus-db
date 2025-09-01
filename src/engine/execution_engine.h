@@ -55,6 +55,7 @@ namespace executor {
 			bpm_ = bpm;
 			catalog_ = catalog;
 			binder_.SetContext(catalog);
+			executor_.SetContext(bpm, catalog);
 		}
 
 		void SetStopDBCallback(std::function<void()> cb) {
