@@ -41,7 +41,7 @@
 #include <vector>
 
 namespace venus {
-namespace executor {
+namespace engine {
 	class ExecutionEngine {
 	public:
 		~ExecutionEngine() = default;
@@ -77,5 +77,5 @@ namespace executor {
 		std::function<void(const std::string&)> init_callback_;
 		std::function<void()> stop_db_callback_;
 	};
-} // namespace executor
+} // namespace engine
 } // namespace venus

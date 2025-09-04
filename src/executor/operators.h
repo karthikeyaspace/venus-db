@@ -17,39 +17,62 @@ namespace executor {
 	public:
 		SeqScanExecutor(ExecutorContext* context, const planner::SeqScanPlanNode* plan)
 		    : AbstractExecutor(context)
-		    , plan_(plan) { }
+		    , plan_(plan)
+		    , table_heap_(nullptr)
+		    , is_open_(false) { }
 
 		void Open() override {
+			if (is_open_)
+				return;
+
 			table_heap_ = new table::TableHeap(
 			    context_->bpm_,
 			    plan_->table_ref_->GetSchema(),
-			    plan_->table_ref_->GetFirstPageId());
+			    plan_->table_ref_->GetTableId());
+			curr_iterator_ = std::make_unique<table::TableHeap::Iterator>(table_heap_->begin());
+			end_iterator_ = std::make_unique<table::TableHeap::Iterator>(table_heap_->end());
+			is_open_ = true;
 		}
 
 		bool Next(Tuple* tuple) override {
-			if (table_heap_ == nullptr) {
-				throw std::runtime_error("Operator error: TableHeap is not initialized - SeqScanExecutor");
-			}
+			if (!is_open_)
+				return false;
 
-			// contd here
-			
+			if (*curr_iterator_ != *end_iterator_) {
+				*tuple = **curr_iterator_;
+				++(*curr_iterator_);
+				return true;
+			}
 			return false;
 		}
 
 		void Close() override {
+			if (!is_open_)
+				return;
+
+			curr_iterator_.reset();
+			end_iterator_.reset();
 			if (table_heap_ != nullptr) {
 				delete table_heap_;
 				table_heap_ = nullptr;
 			}
+			is_open_ = false;
 		}
 
 		const Schema& GetOutputSchema() const override {
+			if (plan_->table_ref_ && plan_->table_ref_->schema) {
+				return *plan_->table_ref_->schema;
+			}
 			static Schema empty_schema;
 			return empty_schema;
 		}
 
 	private:
 		const planner::SeqScanPlanNode* plan_;
+		table::TableHeap* table_heap_;
+		std::unique_ptr<table::TableHeap::Iterator> curr_iterator_;
+		std::unique_ptr<table::TableHeap::Iterator> end_iterator_;
+		bool is_open_;
 	};
 
 	class ProjectionExecutor : public AbstractExecutor {
@@ -58,7 +81,10 @@ namespace executor {
 		    std::unique_ptr<AbstractExecutor> child)
 		    : AbstractExecutor(context)
 		    , plan_(plan)
-		    , child_(std::move(child)) { }
+		    , child_(std::move(child))
+		    , output_schema_() {
+			BuildOutputSchema();
+		}
 
 		void Open() override {
 			if (child_) {
@@ -67,12 +93,39 @@ namespace executor {
 		}
 
 		bool Next(Tuple* tuple) override {
-			LOG("ProjectionExecutor::Next");
-
-			if (child_) {
-				return child_->Next(tuple);
+			if (!child_) {
+				return false;
 			}
-			return false;
+
+			Tuple child_tuple;
+			if (!child_->Next(&child_tuple)) {
+				return false;
+			}
+
+			std::vector<const char*> values;
+			const Schema& child_schema = child_->GetOutputSchema();
+
+			for (size_t i = 0; i < plan_->column_refs_.size(); i++) {
+				const auto& col_ref = plan_->column_refs_[i];
+				bool found = false;
+
+				for (size_t j = 0; j < child_schema.GetColumnCount(); j++) {
+					const Column& child_col = child_schema.GetColumn(j);
+					if (child_col.GetName() == col_ref.GetName()) {
+						const char* value = child_tuple.GetValue(j, &child_schema);
+						values.push_back(value);
+						found = true;
+						break;
+					}
+				}
+
+				if (!found) {
+					throw std::runtime_error("ProjectionExecutor: Column '" + col_ref.GetName() + "' not found in child schema");
+				}
+			}
+
+			*tuple = Tuple(values, &output_schema_);
+			return true;
 		}
 
 		void Close() override {
@@ -82,13 +135,37 @@ namespace executor {
 		}
 
 		const Schema& GetOutputSchema() const override {
-			static Schema empty_schema;
-			return empty_schema;
+			return output_schema_;
 		}
 
 	private:
 		const planner::ProjectionPlanNode* plan_;
 		std::unique_ptr<AbstractExecutor> child_;
+		Schema output_schema_;
+
+		void BuildOutputSchema() {
+			if (!child_) {
+				return;
+			}
+
+			const Schema& child_schema = child_->GetOutputSchema();
+
+			for (size_t i = 0; i < plan_->column_refs_.size(); i++) {
+				const auto& col_ref = plan_->column_refs_[i];
+
+				for (size_t j = 0; j < child_schema.GetColumnCount(); j++) {
+					const Column& child_col = child_schema.GetColumn(j);
+					if (child_col.GetName() == col_ref.GetName()) {
+						output_schema_.AddColumn(
+						    child_col.GetName(),
+						    child_col.GetType(),
+						    child_col.IsPrimary(),
+						    i);
+						break;
+					}
+				}
+			}
+		}
 	};
 
 	class InsertExecutor : public AbstractExecutor {
@@ -97,16 +174,13 @@ namespace executor {
 		    : AbstractExecutor(context)
 		    , plan_(plan) { }
 
-		void Open() override {
-		}
+		void Open() override { }
 
 		bool Next(Tuple* tuple) override {
-			LOG("InsertExecutor::Next");
 			return false;
 		}
 
-		void Close() override {
-		}
+		void Close() override { }
 
 		const Schema& GetOutputSchema() const override {
 			static Schema empty_schema;
@@ -123,16 +197,13 @@ namespace executor {
 		    : AbstractExecutor(context)
 		    , plan_(plan) { }
 
-		void Open() override {
-		}
+		void Open() override { }
 
 		bool Next(Tuple* tuple) override {
-			LOG("CreateTableExecutor::Next");
 			return false;
 		}
 
-		void Close() override {
-		}
+		void Close() override { }
 
 		const Schema& GetOutputSchema() const override {
 			static Schema empty_schema;
@@ -149,16 +220,13 @@ namespace executor {
 		    : AbstractExecutor(context)
 		    , plan_(plan) { }
 
-		void Open() override {
-		}
+		void Open() override { }
 
 		bool Next(Tuple* tuple) override {
-			LOG("DropTableExecutor::Next");
 			return false;
 		}
 
-		void Close() override {
-		}
+		void Close() override { }
 
 		const Schema& GetOutputSchema() const override {
 			static Schema empty_schema;
@@ -175,19 +243,16 @@ namespace executor {
 		    : AbstractExecutor(context)
 		    , plan_(plan) { }
 
-		void Open() override {
-		}
+		void Open() override { }
 
 		bool Next(Tuple* tuple) override {
 			LOG("ShowTablesExecutor::Next");
 			return false;
 		}
 
-		void Close() override {
-		}
+		void Close() override { }
 
 		const Schema& GetOutputSchema() const override {
-			// TODO: Return proper schema
 			static Schema empty_schema;
 			return empty_schema;
 		}
@@ -202,17 +267,13 @@ namespace executor {
 		    : AbstractExecutor(context)
 		    , plan_(plan) { }
 
-		void Open() override {
-		}
+		void Open() override { }
 
 		bool Next(Tuple* tuple) override {
-			LOG("DatabaseOpExecutor::Next");
-
 			return false;
 		}
 
-		void Close() override {
-		}
+		void Close() override { }
 
 		const Schema& GetOutputSchema() const override {
 			static Schema empty_schema;

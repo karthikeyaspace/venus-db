@@ -32,17 +32,18 @@ namespace executor {
 		const Schema& out_schema = root->GetOutputSchema();
 		const bool has_output = out_schema.GetColumnCount() > 0;
 
-		std::unique_ptr<TupleSet> result_set = nullptr;
+		std::unique_ptr<TupleSet> tuple_set = nullptr;
 		size_t num_rows = 0;
 
 		try {
 			if (has_output) {
-				result_set = std::make_unique<TupleSet>(out_schema);
+				tuple_set = std::make_unique<TupleSet>(out_schema);
 				Tuple t;
 				while (root->Next(&t)) {
-					result_set->AddTuple(t);
+					tuple_set->AddTuple(t);
 					num_rows++;
 				}
+
 			} else {
 				Tuple t;
 				while (root->Next(&t)) {
@@ -61,8 +62,8 @@ namespace executor {
 		}
 
 		if (has_output) {
-			auto rs = ResultSet::Data(std::move(result_set));
-			rs.message_ = std::to_string(num_rows) + " rows returned.";
+			auto rs = ResultSet::Data(std::move(tuple_set));
+			rs.message_ = std::to_string(num_rows) + " rows effected.";
 			return rs;
 		}
 
@@ -120,5 +121,75 @@ namespace executor {
 		}
 	}
 
+	void Executor::PrintResultSet(const ResultSet& result_set) {
+		if (result_set.success_) {
+			if (result_set.data_) {
+				const TupleSet& tuple_set = *result_set.data_;
+				const Schema& schema = tuple_set.GetSchema();
+				const auto& tuples = tuple_set.GetTuples();
+
+				if (tuples.empty()) {
+					std::cout << "No data found." << std::endl;
+					return;
+				}
+
+				std::cout << std::endl;
+				for (size_t i = 0; i < schema.GetColumnCount(); i++) {
+					const Column& col = schema.GetColumn(i);
+					std::cout << std::setw(18) << std::left << col.GetName();
+					if (i < schema.GetColumnCount() - 1) {
+						std::cout << " | ";
+					}
+				}
+				std::cout << std::endl;
+
+				for (size_t i = 0; i < schema.GetColumnCount(); i++) {
+					std::cout << std::string(18, '-');
+					if (i < schema.GetColumnCount() - 1) {
+						std::cout << "-+-";
+					}
+				}
+				std::cout << std::endl;
+
+				for (const auto& tuple : tuples) {
+					for (size_t i = 0; i < schema.GetColumnCount(); i++) {
+						const Column& col = schema.GetColumn(i);
+
+						const char* raw_value = tuple.GetValue(i, &schema);
+						std::string value;
+
+						if (raw_value != nullptr) {
+							switch (col.GetType()) {
+							case ColumnType::INT:
+								value = std::to_string(*reinterpret_cast<const int*>(raw_value));
+								break;
+							case ColumnType::FLOAT:
+								value = std::to_string(*reinterpret_cast<const float*>(raw_value));
+								break;
+							case ColumnType::CHAR:
+								value = std::string(raw_value);
+								break;
+							default:
+								value = "UNK";
+								break;
+							}
+						} else {
+							value = "NULL";
+						}
+
+						std::cout << std::setw(18) << std::left << value;
+						if (i < schema.GetColumnCount() - 1) {
+							std::cout << " | ";
+						}
+					}
+					std::cout << std::endl;
+				}
+				std::cout << std::endl;
+			}
+			std::cout << result_set.message_ << std::endl;
+		} else {
+			std::cout << "Failed to execute query: " << result_set.message_ << std::endl;
+		}
+	}
 }
 }

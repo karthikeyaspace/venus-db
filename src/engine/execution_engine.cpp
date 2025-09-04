@@ -11,7 +11,7 @@ using namespace venus::planner;
 using namespace venus::executor;
 
 namespace venus {
-namespace executor {
+namespace engine {
 
 	bool ExecutionEngine::Execute(const std::string& query) {
 		try {
@@ -62,5 +62,5 @@ namespace executor {
 			}
 		}
 	}
-} // namespace executor
+} // namespace engine
 } // namespace venus

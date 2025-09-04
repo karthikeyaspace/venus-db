@@ -57,6 +57,8 @@
 #include "table/table_heap.h"
 
 #include <functional>
+#include <iomanip>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -69,7 +71,8 @@ namespace executor {
 	class AbstractExecutor {
 	public:
 		explicit AbstractExecutor(ExecutorContext* context)
-		    : context_(context), table_heap_(nullptr) { }
+		    : context_(context)
+		    , table_heap_(nullptr) { }
 		virtual ~AbstractExecutor() = default;
 
 		virtual void Open() = 0;
@@ -86,9 +89,9 @@ namespace executor {
 	class TupleSet {
 	public:
 		std::vector<Tuple> tuples_;
-		Schema *schema_;
+		Schema schema_;
 
-		TupleSet(Schema* schema)
+		TupleSet(const Schema& schema)
 		    : schema_(schema) { }
 
 		void AddTuple(const Tuple& tuple) {
@@ -98,7 +101,7 @@ namespace executor {
 		size_t GetSize() const { return tuples_.size(); }
 		bool IsEmpty() const { return tuples_.empty(); }
 
-			Schema* GetSchema() const { return schema_; }
+		const Schema& GetSchema() const { return schema_; }
 		const std::vector<Tuple>& GetTuples() const { return tuples_; }
 	};
 
@@ -149,17 +152,7 @@ namespace executor {
 			context_ = new ExecutorContext(catalog, bpm);
 		}
 
-		void PrintResultSet(const ResultSet& result_set) {
-			if (result_set.success_) {
-				std::cout << result_set.message_ << std::endl;
-				if (result_set.data_) {
-					const auto& tuples = result_set.data_->GetTuples();
-					std::cout << "Retrieved " << tuples.size() << " rows." << std::endl;
-				}
-			} else {
-				std::cout << "Failed to execute query: " << result_set.message_ << std::endl;
-			}
-		}
+		void PrintResultSet(const ResultSet& result_set);
 
 	private:
 		ExecutorContext* context_;

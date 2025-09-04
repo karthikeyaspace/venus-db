@@ -41,7 +41,7 @@ namespace buffer {
 namespace catalog {
 	class CatalogManager;
 }
-namespace executor {
+namespace engine {
 	class ExecutionEngine;
 }
 }
@@ -57,7 +57,7 @@ namespace database {
 		buffer::BufferPoolManager* GetBufferPoolManager() const { return bpm_; }
 		catalog::CatalogManager* GetCatalogManager() const { return catalog_; }
 		storage::DiskManager* GetDiskManager() const { return disk_manager_; }
-		executor::ExecutionEngine* GetExecutionEngine() const { return executor_; }
+		engine::ExecutionEngine* GetExecutionEngine() const { return executor_; }
 
 		bool IsOpen() const { return is_open_; }
 		const std::string& GetDatabasePath() const { return db_path_; }
@@ -73,7 +73,7 @@ namespace database {
 		storage::DiskManager* disk_manager_;
 		buffer::BufferPoolManager* bpm_;
 		catalog::CatalogManager* catalog_;
-		executor::ExecutionEngine* executor_;
+		engine::ExecutionEngine* executor_;
 
 		void Initialize(const std::string& db_path);
 		void Cleanup();

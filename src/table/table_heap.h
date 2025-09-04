@@ -79,6 +79,10 @@ namespace table {
 				}
 			};
 
+			const Tuple* GetTuple() const {
+				return &current_tuple_;
+			}
+
 			const Tuple& operator*();
 			Tuple* operator->();
 			Iterator& operator++();

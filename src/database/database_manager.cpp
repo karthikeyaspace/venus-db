@@ -11,7 +11,7 @@ using namespace venus::database;
 using namespace venus::storage;
 using namespace venus::buffer;
 using namespace venus::catalog;
-using namespace venus::executor;
+using namespace venus::engine;
 
 DatabaseManager::DatabaseManager()
     : db_path_("")
