@@ -66,20 +66,19 @@ namespace venus {
 namespace executor {
 
 	class ExecutorContext;
-	class ExecutionEngine;
-
+	struct OperatorOutput;
+	
 	class AbstractExecutor {
 	public:
-		explicit AbstractExecutor(ExecutorContext* context)
-		    : context_(context)
-		    , table_heap_(nullptr) { }
 		virtual ~AbstractExecutor() = default;
 
-		virtual void Open() = 0;
-		virtual bool Next(Tuple* tuple) = 0;
-		virtual void Close() = 0;
+		AbstractExecutor(ExecutorContext* context)
+		    : context_(context)
+		    , table_heap_(nullptr) { }
 
-		virtual const Schema& GetOutputSchema() const = 0;
+		virtual void Open() = 0;
+		virtual bool Next(OperatorOutput* out) = 0;
+		virtual void Close() = 0;
 
 	protected:
 		ExecutorContext* context_;
@@ -128,6 +127,27 @@ namespace executor {
 			ResultSet result(true);
 			result.data_ = std::move(data);
 			return result;
+		}
+	};
+
+	struct OperatorOutput {
+		enum class OutputType {
+			TUPLE,
+			MESSAGE
+		};
+
+		Tuple tuple_;
+		OutputType type_;
+		std::string message_;
+		bool ok_;
+		const Schema* schema_ = nullptr;
+
+		const void ResetTuple() {
+			tuple_ = Tuple();
+			type_ = OutputType::TUPLE;
+			message_.clear();
+			ok_ = true;
+			schema_ = nullptr;
 		}
 	};
 

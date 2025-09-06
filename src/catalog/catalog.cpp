@@ -233,40 +233,5 @@ namespace catalog {
 			return "UNKNOWN_TYPE";
 		}
 	}
-
-	void CatalogManager::ShowMasterTables() {
-		std::cout << "=== MASTER_TABLES ===" << std::endl;
-		std::cout
-		    << "table_id | table_name | num_columns | first_page_id | primary_key" << std::endl;
-		std::cout << "---------|------------|-------------|---------------|------------" << std::endl;
-
-		int table_count = 0;
-		for (auto it = tables_table_->begin(); it != tables_table_->end(); ++it) {
-			const Tuple& tuple = *it;
-			std::cout << GetValueAsString(tuple, 0, master_tables_schema_) << " | "
-			          << GetValueAsString(tuple, 1, master_tables_schema_) << " | "
-			          << GetValueAsString(tuple, 2, master_tables_schema_) << " | "
-			          << GetValueAsString(tuple, 3, master_tables_schema_) << " | "
-			          << GetValueAsString(tuple, 4, master_tables_schema_) << std::endl;
-			table_count++;
-		}
-
-		std::cout << "=== MASTER_COLUMNS ===" << std::endl;
-		std::cout
-		    << "col_id | table_id | col_name | col_type | col_size | ordinal_pos | is_primary" << std::endl;
-		std::cout << "-------|----------|----------|----------|----------|-------------|------------" << std::endl;
-
-		for (auto it = columns_table_->begin(); it != columns_table_->end(); ++it) {
-			const Tuple& tuple = *it;
-			std::cout << GetValueAsString(tuple, 0, master_columns_schema_) << " | "
-			          << GetValueAsString(tuple, 1, master_columns_schema_) << " | "
-			          << GetValueAsString(tuple, 2, master_columns_schema_) << " | "
-			          << GetValueAsString(tuple, 3, master_columns_schema_) << " | "
-			          << GetValueAsString(tuple, 4, master_columns_schema_) << " | "
-			          << GetValueAsString(tuple, 5, master_columns_schema_) << " | "
-			          << GetValueAsString(tuple, 6, master_columns_schema_) << std::endl;
-		}
-		std::cout << std::endl;
-	}
 }
 }

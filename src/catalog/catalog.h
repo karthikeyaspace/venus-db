@@ -68,10 +68,6 @@ namespace catalog {
 
 		TableRef* GetTableRef(const std::string& table_name);
 
-		std::vector<std::string> GetAllTables();
-
-		void ShowMasterTables();
-
 	private:
 		buffer::BufferPoolManager* bpm_;
 		table::TableHeap* tables_table_;

@@ -29,30 +29,30 @@ namespace executor {
 			return ResultSet::Failure(std::string("Executor open failed: ") + e.what());
 		}
 
-		const Schema& out_schema = root->GetOutputSchema();
-		const bool has_output = out_schema.GetColumnCount() > 0;
-
 		std::unique_ptr<TupleSet> tuple_set = nullptr;
 		size_t num_rows = 0;
+		OperatorOutput out;
 
 		try {
-			if (has_output) {
-				tuple_set = std::make_unique<TupleSet>(out_schema);
-				Tuple t;
-				while (root->Next(&t)) {
-					tuple_set->AddTuple(t);
+			while (root->Next(&out)) {
+				if (out.type_ == OperatorOutput::OutputType::TUPLE) {
+					if (!tuple_set) {
+						if (out.schema_ == nullptr) {
+							static Schema empty_schema;
+							tuple_set = std::make_unique<TupleSet>(empty_schema);
+						} else {
+							tuple_set = std::make_unique<TupleSet>(*out.schema_);
+						}
+					}
+					tuple_set->AddTuple(out.tuple_);
 					num_rows++;
-				}
-
-			} else {
-				Tuple t;
-				while (root->Next(&t)) {
-					num_rows++;
+				} else if (out.type_ == OperatorOutput::OutputType::MESSAGE) {
+					root->Close();
+					return ResultSet(out.ok_, out.message_ + " (" + std::to_string(num_rows) + " rows affected)");
 				}
 			}
 		} catch (const std::exception& e) {
-			root->Close();
-			return ResultSet::Failure(std::string("Executor Next() failed: ") + e.what());
+			return ResultSet::Failure(std::string("Executor next failed: ") + e.what());
 		}
 
 		try {
@@ -61,13 +61,11 @@ namespace executor {
 			return ResultSet::Failure(std::string("Executor Close() failed: ") + e.what());
 		}
 
-		if (has_output) {
-			auto rs = ResultSet::Data(std::move(tuple_set));
-			rs.message_ = std::to_string(num_rows) + " rows effected.";
-			return rs;
+		if (num_rows > 0) {
+			return ResultSet::Data(std::move(tuple_set));
 		}
 
-		return ResultSet::Success(std::to_string(num_rows) + " rows affected.");
+		return ResultSet::Success("Ok");
 	}
 
 	std::unique_ptr<AbstractExecutor> Executor::BuildExecutorTree(const planner::PlanNode* plan) {
