@@ -79,8 +79,8 @@ namespace binder {
 			const std::string& table_name = ast->value;
 
 			TableRef* bound_table = catalog_->GetTableRef(table_name);
-			if (bound_table == nullptr) {
-				throw std::runtime_error("Binder error: Table '" + table_name + "' does not exist");
+			if (bound_table != nullptr) {
+				throw std::runtime_error("Binder error: Table '" + table_name + "' already not exist");
 			}
 
 			auto bound_create_table = std::make_unique<BoundCreateTableNode>(table_name);

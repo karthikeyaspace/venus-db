@@ -61,7 +61,7 @@ namespace executor {
 			return ResultSet::Failure(std::string("Executor Close() failed: ") + e.what());
 		}
 
-		if (num_rows > 0) {
+		if (num_rows > 0) {	
 			return ResultSet::Data(std::move(tuple_set));
 		}
 

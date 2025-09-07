@@ -160,6 +160,7 @@ namespace executor {
 		void Open() override { }
 
 		bool Next(OperatorOutput* out) override {
+			LOG("InsertExecutor::Next");
 			return false;
 		}
 
@@ -178,6 +179,7 @@ namespace executor {
 		void Open() override { }
 
 		bool Next(OperatorOutput* out) override {
+			LOG("CreateTableExecutor::Next");
 			return false;
 		}
 
@@ -196,6 +198,7 @@ namespace executor {
 		void Open() override { }
 
 		bool Next(OperatorOutput* out) override {
+			LOG("DropTableExecutor::Next");
 			return false;
 		}
 
@@ -233,6 +236,7 @@ namespace executor {
 		void Open() override { }
 
 		bool Next(OperatorOutput* out) override {
+			LOG("DatabaseOpExecutor::Next");
 			return false;
 		}
 

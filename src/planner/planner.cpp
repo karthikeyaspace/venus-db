@@ -91,7 +91,7 @@ namespace planner {
 				throw std::runtime_error("Planner error: Null show tables node");
 			}
 
-			return std::make_unique<DatabaseOpPlanNode>(PlanNodeType::SHOW_TABLES);
+			return std::make_unique<ShowTablesPlanNode>();
 		}
 
 		case ASTNodeType::DROP_TABLE: {
