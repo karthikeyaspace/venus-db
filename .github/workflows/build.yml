@@ -1,0 +1,51 @@
+name: Build VenusDB
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -B build -S .
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Move Linux binary to releases folder
+        run: |
+          mkdir -p releases
+          cp build/venus releases/venus
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: venus-linux
+          path: releases/venus
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake (MinGW)
+        run: cmake -B build -S . -G "MinGW Makefiles"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Move Windows binary to releases folder
+        run: |
+          mkdir releases
+          copy build\venus.exe releases\venus.exe
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: venus-windows
+          path: releases/venus.exe
