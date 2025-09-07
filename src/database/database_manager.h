@@ -76,6 +76,7 @@ namespace database {
 		engine::ExecutionEngine* executor_;
 
 		void Initialize(const std::string& db_path);
+		void InitializeExecutor();
 		void Cleanup();
 
 		DISALLOW_COPY_AND_MOVE(DatabaseManager);

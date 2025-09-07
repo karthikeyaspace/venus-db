@@ -67,7 +67,7 @@ namespace executor {
 
 	class ExecutorContext;
 	struct OperatorOutput;
-	
+
 	class AbstractExecutor {
 	public:
 		virtual ~AbstractExecutor() = default;
@@ -142,12 +142,21 @@ namespace executor {
 		bool ok_;
 		const Schema* schema_ = nullptr;
 
-		const void ResetTuple() {
+		void ResetTuple() {
 			tuple_ = Tuple();
 			type_ = OutputType::TUPLE;
 			message_.clear();
 			ok_ = true;
 			schema_ = nullptr;
+		}
+
+		void SetResponse(const std::string& msg, OutputType type = OutputType::MESSAGE, bool ok = true, const Tuple& tup = Tuple(), const Schema* schema = nullptr) {
+			ResetTuple();
+			tuple_ = tup;
+			type_ = type;
+			message_ = msg;
+			ok_ = ok;
+			schema_ = schema;
 		}
 	};
 

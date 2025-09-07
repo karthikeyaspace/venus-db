@@ -13,10 +13,6 @@ namespace binder {
 			throw std::invalid_argument("Binder error: Parsing failed");
 		}
 
-		if (catalog_ == nullptr && ast->type != ASTNodeType::USE_DATABASE) {
-			throw std::runtime_error("Binder error: Database is not initialized");
-		}
-
 		switch (ast->type) {
 		case ASTNodeType::SHOW_DATABASES:
 		case ASTNodeType::CREATE_DATABASE:
@@ -33,6 +29,10 @@ namespace binder {
 		case ASTNodeType::SELECT: {
 			// ast->children[0] is PROJECTION_LIST, children of it are COLUMN_REF
 			// ast->children[1] is TABLE_REF
+
+			if (catalog_ == nullptr) {
+				throw std::runtime_error("Binder error: Database is not initialized");
+			}
 
 			if (ast->children.size() < 2) {
 				throw std::runtime_error("Binder error: Invalid SELECT AST structure");
@@ -76,6 +76,10 @@ namespace binder {
 		}
 
 		case ASTNodeType::CREATE_TABLE: {
+			if (catalog_ == nullptr) {
+				throw std::runtime_error("Binder error: Database is not initialized");
+			}
+
 			const std::string& table_name = ast->value;
 
 			TableRef* bound_table = catalog_->GetTableRef(table_name);
@@ -129,6 +133,10 @@ namespace binder {
 		}
 
 		case ASTNodeType::INSERT: {
+			if (catalog_ == nullptr) {
+				throw std::runtime_error("Binder error: Database is not initialized");
+			}
+
 			const std::string& table_name = ast->value;
 
 			TableRef* bound_table = catalog_->GetTableRef(table_name);
@@ -199,8 +207,12 @@ namespace binder {
 		}
 
 		case ASTNodeType::DROP_TABLE: {
+			if (catalog_ == nullptr) {
+				throw std::runtime_error("Binder error: Database is not initialized");
+			}
+
 			const std::string& table_name = ast->value;
-			
+
 			TableRef* bound_table = catalog_->GetTableRef(table_name);
 			if (bound_table == nullptr) {
 				throw std::runtime_error("Binder error: Table '" + table_name + "' does not exist");
@@ -210,6 +222,10 @@ namespace binder {
 		}
 
 		case ASTNodeType::SHOW_TABLES: {
+			if (catalog_ == nullptr) {
+				throw std::runtime_error("Binder error: Database is not initialized");
+			}
+
 			return std::make_unique<BoundShowTablesNode>();
 		}
 

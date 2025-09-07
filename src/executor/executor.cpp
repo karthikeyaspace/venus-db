@@ -48,7 +48,7 @@ namespace executor {
 					num_rows++;
 				} else if (out.type_ == OperatorOutput::OutputType::MESSAGE) {
 					root->Close();
-					return ResultSet(out.ok_, out.message_ + " (" + std::to_string(num_rows) + " rows affected)");
+					return ResultSet(out.ok_, out.message_);
 				}
 			}
 		} catch (const std::exception& e) {
@@ -61,7 +61,7 @@ namespace executor {
 			return ResultSet::Failure(std::string("Executor Close() failed: ") + e.what());
 		}
 
-		if (num_rows > 0) {	
+		if (num_rows > 0) {
 			return ResultSet::Data(std::move(tuple_set));
 		}
 

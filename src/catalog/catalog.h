@@ -64,7 +64,7 @@ namespace catalog {
 		CatalogManager(buffer::BufferPoolManager* bpm);
 		~CatalogManager();
 
-		void CreateTable(const std::string& table_name, const Schema* schema);
+		void CreateTable(const std::string table_name, const Schema* schema);
 
 		TableRef* GetTableRef(const std::string& table_name);
 

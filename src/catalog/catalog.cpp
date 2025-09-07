@@ -89,7 +89,7 @@ namespace catalog {
 		bpm_->FlushPage(MASTER_COLUMNS_PAGE_ID);
 	}
 
-	void CatalogManager::CreateTable(const std::string& table_name, const Schema* schema) {
+	void CatalogManager::CreateTable(const std::string table_name, const Schema* schema) {
 		page_id_t first_page_id = bpm_->NewPage()->GetPageId();
 		table_id_t table_id = GetNextTableId();
 
@@ -102,7 +102,7 @@ namespace catalog {
 		}
 
 		// Insert table metadata into master_tables
-		tables_table_->InsertTuple({ std::to_string(table_id),
+		bool status = tables_table_->InsertTuple({ std::to_string(table_id),
 		    table_name,
 		    std::to_string(schema->GetColumnCount()),
 		    std::to_string(first_page_id),
@@ -113,13 +113,17 @@ namespace catalog {
 			const Column& column = schema->GetColumn(i);
 			column_id_t column_id = GetNextColumnId();
 
-			columns_table_->InsertTuple({ std::to_string(column_id),
+			status = columns_table_->InsertTuple({ std::to_string(column_id),
 			    std::to_string(table_id),
 			    column.GetName(),
 			    std::to_string(static_cast<int>(column.GetType())),
 			    std::to_string(column.GetLength()),
 			    std::to_string(column.GetOrdinalPosition()),
 			    std::to_string(column.IsPrimary()) });
+		}
+
+		if (!status) {
+			throw std::runtime_error("Catalog error: Failed to insert table metadata into system tables.");
 		}
 
 		bpm_->FlushPage(MASTER_TABLES_PAGE_ID);

@@ -19,10 +19,17 @@ DatabaseManager::DatabaseManager()
     , disk_manager_(nullptr)
     , bpm_(nullptr)
     , catalog_(nullptr) {
-	executor_ = new ExecutionEngine();
-	if (!executor_) {
-		throw std::runtime_error("Database Error: Failed to create ExecutionEngine");
+	InitializeExecutor();
+}
+
+DatabaseManager::~DatabaseManager() {
+	if (is_open_) {
+		Close();
 	}
+}
+
+void DatabaseManager::InitializeExecutor() {
+	executor_ = new ExecutionEngine();
 	executor_->InitializeCallback(
 	    [this](const std::string& db_name) {
 		    this->Initialize(db_name);
@@ -36,11 +43,8 @@ DatabaseManager::DatabaseManager()
 	    });
 }
 
-DatabaseManager::~DatabaseManager() {
-	if (is_open_) {
-		Close();
-	}
-}
+// Initialize() and InitializeExecutor() are cyclic
+// I myself am embarrassed writing this part of code, it works though
 
 void DatabaseManager::Initialize(const std::string& db_name) {
 	if (db_name.empty()) {
@@ -48,71 +52,37 @@ void DatabaseManager::Initialize(const std::string& db_name) {
 	}
 
 	if (is_open_) {
+		// situation where user is using a db, and greedily switches to another db (use command)
+		// need to carefully reinitialize all the components especially executor
 		Close();
+		InitializeExecutor();
 	}
 
-	// Build full path: db_dir + "/" + db_name + ".db"
-	db_path_ = std::string(venus::db_dir) + "/" + db_name + ".db";
-
-	std::cout << "DatabaseManager: Opening database file: " << db_path_ << std::endl;
+	// full path: DATABASE_DIRECTORY + "/" + db_name + ".db"
+	db_path_ = std::string(venus::DATABASE_DIRECTORY) + "/" + db_name + ".db";
 
 	disk_manager_ = new DiskManager(db_path_);
 	if (!disk_manager_) {
-		throw std::runtime_error("Failed to create DiskManager");
+		throw std::runtime_error("DatabaseManager: Failed to create DiskManager");
 	}
 
 	bpm_ = new BufferPoolManager(disk_manager_);
 	if (!bpm_) {
-		throw std::runtime_error("Failed to create BufferPoolManager");
+		throw std::runtime_error("DatabaseManager: Failed to create BufferPoolManager");
 	}
 
 	catalog_ = new CatalogManager(bpm_);
 	if (!catalog_) {
-		throw std::runtime_error("Failed to create CatalogManager");
+		throw std::runtime_error("DatabaseManager: Failed to create CatalogManager");
 	}
 
 	if (!executor_) {
-		throw std::runtime_error("ExecutionEngine is not initialized");
+		throw std::runtime_error("DatabaseManager: ExecutionEngine is not initialized");
 	}
 
 	executor_->SetLocalContext(bpm_, catalog_);
 
 	is_open_ = true;
-	std::cout << "DatabaseManager: Database '" << db_name << "' opened successfully" << std::endl;
-}
-
-void create_database(const std::string& db_name) {
-	std::string db_path = std::string(venus::db_dir) + "/" + db_name + ".db";
-
-	std::filesystem::create_directories(venus::db_dir);
-
-	std::ofstream db_file(db_path);
-	if (!db_file) {
-		throw std::runtime_error("Failed to create database file: " + db_path);
-	}
-
-	std::cout << "Created database: " << db_path << std::endl;
-
-	db_file.close();
-}
-
-void show_databases() {
-	for (const auto& entry : std::filesystem::directory_iterator(venus::db_dir)) {
-		if (entry.is_regular_file() && entry.path().extension() == ".db") {
-			std::cout << "- " << entry.path().stem().string() << std::endl;
-		}
-	}
-}
-
-void drop_database(const std::string& db_name) {
-	std::string db_path = std::string(venus::db_dir) + "/" + db_name + ".db";
-
-	if (std::filesystem::exists(db_path)) {
-		std::filesystem::remove(db_path);
-		std::cout << "Dropped database: " << db_name << std::endl;
-	} else {
-		std::cerr << "Database does not exist: " << db_name << std::endl;
-	}
 }
 
 void DatabaseManager::Start() {
@@ -151,8 +121,6 @@ void DatabaseManager::FlushAllPages() {
 	if (!bpm_->FlushAllPages()) {
 		throw std::runtime_error("Failed to flush all pages to disk");
 	}
-
-	std::cout << "DatabaseManager: Flushed all pages to disk" << std::endl;
 }
 
 void DatabaseManager::Close() {
@@ -162,12 +130,8 @@ void DatabaseManager::Close() {
 
 	try {
 		FlushAllPages();
-
 		Cleanup();
-
-		std::cout << "DatabaseManager: Database closed successfully" << std::endl;
 	} catch (const std::exception& e) {
 		std::cerr << "Error during database close: " << e.what() << std::endl;
-		Cleanup();
 	}
 }

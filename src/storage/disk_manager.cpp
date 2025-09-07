@@ -5,32 +5,32 @@
 namespace venus {
 namespace storage {
 
-	// Using OS file handling
 	DiskManager::DiskManager(const std::string& db_file)
 	    : db_file_name(db_file)
 	    , next_page_id_(FIRST_USABLE_PAGE_ID)
 	    , file_size_(0) {
 		db_io_.open(db_file_name, std::ios::in | std::ios::out | std::ios::binary);
 		if (!db_io_) {
-			db_io_.clear();
-			db_io_.open(db_file_name, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+			throw std::runtime_error("DatabaseManager error: " + db_file + " does not exist");
 		}
-		
+
 		if (!db_io_.is_open()) {
-			throw std::runtime_error("Failed to open database file: " + db_file);
+			throw std::runtime_error("DatabaseManager error: Failed to open database file: " + db_file);
 		}
-		
+
 		db_io_.seekg(0, std::ios::end);
 		file_size_ = db_io_.tellg();
 		db_io_.seekg(0, std::ios::beg);
-		db_io_.seekp(0, std::ios::beg);  // put pointer
-		
+		db_io_.seekp(0, std::ios::beg); // put pointer
+
 		// first 3 pages (0, 1, 2) are reserved for system tables
 		if (file_size_ > 0) {
 			page_id_t calculated_page_id = static_cast<page_id_t>(file_size_ / PAGE_SIZE);
 			next_page_id_ = std::max(calculated_page_id, FIRST_USABLE_PAGE_ID);
 		}
-	}	DiskManager::~DiskManager() {
+	}
+
+	DiskManager::~DiskManager() {
 		if (db_io_.is_open()) {
 			db_io_.close();
 		}
@@ -55,14 +55,14 @@ namespace storage {
 		}
 
 		long long offset = static_cast<long long>(page_id) * PAGE_SIZE;
-		
-		db_io_.clear();  
+
+		db_io_.clear();
 		db_io_.seekp(offset);
-		
+
 		if (!db_io_.good()) {
 			throw std::runtime_error("Failed to seek to write position");
 		}
-		
+
 		if (!db_io_.write(page_data, PAGE_SIZE)) {
 			throw std::runtime_error("Failed to write page to disk");
 		}
@@ -72,7 +72,7 @@ namespace storage {
 			file_size_ = offset + PAGE_SIZE;
 		}
 
-		LOG("Disk Manager: WritePage - Page ID: " + std::to_string(page_id) + ", Offset: " + std::to_string(offset) + ", Size: " + std::to_string(PAGE_SIZE) + ", File Size: " + std::to_string(file_size_));
+		// LOG("Disk Manager: WritePage - Page ID: " + std::to_string(page_id) + ", Offset: " + std::to_string(offset) + ", Size: " + std::to_string(PAGE_SIZE) + ", File Size: " + std::to_string(file_size_));
 
 		db_io_.flush(); // force policy
 	}

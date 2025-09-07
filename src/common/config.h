@@ -18,7 +18,7 @@ constexpr uint32_t MAX_COLUMNS = 64; // per table
 constexpr uint32_t MAX_CHAR_LENGTH = 32;
 
 // Every database has a db file stored in the data directory with file name <db_name>.db
-constexpr const char* db_dir = "/mnt/d/KARTHIKEYA/PROJECTS/YO2/venus-db/data";
+constexpr const char* DATABASE_DIRECTORY = "/mnt/d/KARTHIKEYA/PROJECTS/YO2/venus-db/data";
 
 using page_id_t = uint32_t;
 using slot_id_t = uint16_t;

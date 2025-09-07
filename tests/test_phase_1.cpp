@@ -93,9 +93,9 @@ int main() {
 }
 
 void create_database(const std::string& db_name) {
-	std::string db_path = std::string(venus::db_dir) + "/" + db_name + ".db";
+	std::string db_path = std::string(venus::DATABASE_DIRECTORY) + "/" + db_name + ".db";
 
-	std::filesystem::create_directories(venus::db_dir);
+	std::filesystem::create_directories(venus::DATABASE_DIRECTORY);
 
 	std::ofstream db_file(db_path);
 	if (!db_file) {
@@ -112,7 +112,7 @@ void use_database(const std::string& db_name,
     BufferPoolManager*& buffer_pool_manager) {
 
 	// Construct the full path to the database file
-	std::string db_path = std::string(venus::db_dir) + "/" + db_name + ".db";
+	std::string db_path = std::string(venus::DATABASE_DIRECTORY) + "/" + db_name + ".db";
 
 	disk_manager = new DiskManager(db_path);
 	buffer_pool_manager = new BufferPoolManager(disk_manager);
@@ -125,7 +125,7 @@ void use_database(const std::string& db_name,
 }
 
 void show_databases() {
-	for (const auto& entry : std::filesystem::directory_iterator(venus::db_dir)) {
+	for (const auto& entry : std::filesystem::directory_iterator(venus::DATABASE_DIRECTORY)) {
 		if (entry.is_regular_file() && entry.path().extension() == ".db") {
 			std::cout << "- " << entry.path().stem().string() << std::endl;
 		}
@@ -316,7 +316,7 @@ void table_scan_from_disk(BufferPoolManager* bpm, Schema* schema) {
 	std::cout << "Simulating disk read by creating fresh buffer pool..." << std::endl;
 
 	// Create a fresh disk manager and buffer pool to simulate reading from disk
-	DiskManager* fresh_disk_manager = new DiskManager(std::string(venus::db_dir) + "/test.db");
+	DiskManager* fresh_disk_manager = new DiskManager(std::string(venus::DATABASE_DIRECTORY) + "/test.db");
 	BufferPoolManager* fresh_bpm = new BufferPoolManager(fresh_disk_manager);
 
 	// Try to fetch page 0 from disk
