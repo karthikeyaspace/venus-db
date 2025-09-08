@@ -131,6 +131,49 @@ namespace catalog {
 		bpm_->FlushPage(first_page_id);
 	}
 
+	bool CatalogManager::DropTable(const std::string& table_name) {
+		// if we have page_id and slot_id of the tuples to delete in master_tables and master_columns
+		// we can delete them using table_heap->DeleteTuple(rid)
+		// iterate through the tables
+
+		for (auto it = tables_table_->begin(); it != tables_table_->end(); ++it) {
+			const Tuple& tuple = *it;
+			const char* value = tuple.GetValue(1, master_tables_schema_);
+			if (std::string(value) == table_name) {
+				// table to drop
+				table_id_t table_id = static_cast<table_id_t>(std::stoi(GetValueAsString(tuple, 0, master_tables_schema_)));
+				RID rid = tuple.GetRID();
+				if (!tables_table_->DeleteTuple(rid)) {
+					throw std::runtime_error("Catalog error: Failed to delete table metadata from master_tables.");
+				}
+
+				// delete corresponding entries in master_columns
+				std::vector<RID> rids_to_delete;
+				for (auto col_it = columns_table_->begin(); col_it != columns_table_->end(); ++col_it) {
+					const Tuple& col_tuple = *col_it;
+					table_id_t col_table_id = static_cast<table_id_t>(std::stoi(GetValueAsString(col_tuple, 1, master_columns_schema_)));
+					if (col_table_id == table_id) {
+						rids_to_delete.push_back(col_tuple.GetRID());
+					}
+				}
+
+				for (const RID& col_rid : rids_to_delete) {
+					if (!columns_table_->DeleteTuple(col_rid)) {
+						throw std::runtime_error("Catalog error: Failed to delete column metadata from master_columns.");
+					}
+				}
+				
+				bpm_->FlushPage(MASTER_TABLES_PAGE_ID);
+				bpm_->FlushPage(MASTER_COLUMNS_PAGE_ID);
+
+				// no need to continue since there is only one table entry
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	TableRef* CatalogManager::GetTableRef(const std::string& table_name) {
 		table_id_t table_id = INVALID_TABLE_ID;
 		page_id_t first_page_id = INVALID_PAGE_ID;

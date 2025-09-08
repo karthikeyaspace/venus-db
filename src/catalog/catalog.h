@@ -65,6 +65,7 @@ namespace catalog {
 		~CatalogManager();
 
 		void CreateTable(const std::string table_name, const Schema* schema);
+		bool DropTable(const std::string& table_name);
 
 		TableRef* GetTableRef(const std::string& table_name);
 

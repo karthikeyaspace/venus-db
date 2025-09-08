@@ -220,7 +220,20 @@ namespace executor {
 		void Open() override { }
 
 		bool Next(OperatorOutput* out) override {
-			throw std::runtime_error("DropTableExecutor::Next - Not implemented");
+			// when a table is dropped
+			// remove its entry from master_tables and master_columns (catalog)
+			// deallocate its pages (bpm)
+
+			try {
+				if (context_->catalog_manager_->DropTable(plan_->table_name_)) {
+					out->SetResponse("Table " + plan_->table_name_ + " dropped successfully.", OperatorOutput::OutputType::MESSAGE, true);
+				} else {
+					out->SetResponse("Failed to drop table", OperatorOutput::OutputType::MESSAGE, false);
+				}
+				return true;
+			} catch (const std::exception& e) {
+				throw std::runtime_error("DropTableExecutor::Next - Failed to drop table: " + std::string(e.what()));
+			}
 		}
 
 		void Close() override { }
