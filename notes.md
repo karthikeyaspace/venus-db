@@ -176,4 +176,21 @@ For sql grammer - https://forcedotcom.github.io/phoenix/
    EXIT
    EXEC <file_name>
 
-   
+
+
+## Roadmap
+- more queries - where, limit, order by, joins
+- Better constraints handling - unique, not null, check
+- Auto increment primary keys
+- Need better CHAR data type handling
+
+- Add indexes - B+ Tree
+- Buffer pool manager - LRU-K, tracking dirty pages(pin/unpin)
+- Better deletion for Tuple/Page - reclaim functionality
+- Better error handling - custom exceptions
+
+- Network layer - HTTP connection, Req queue, Thread pool
+- EXEC file
+
+- WAL
+- Performance stats
