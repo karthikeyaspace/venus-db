@@ -2,13 +2,13 @@
 
 A simple SQL database system built from scratch in C++ to understand the internal workings of database systems. This project is inspired by Sir Arpit Bhayani and Prof. Andy Pavlo's educational content on database internals.
 
-## 🎯 Project Goals
+## Project Goals
 
 - **Educational**: Learn database internals by building one from scratch
 - **Simple**: Focus on core concepts without unnecessary complexity
 - **Functional**: Support basic SQL operations with proper architecture
 
-## ✨ Features
+## Features
 
 ### Currently Implemented
 - **SQL Parser**: Basic SQL command parsing (CREATE, INSERT, SELECT, etc.)
@@ -29,7 +29,7 @@ A simple SQL database system built from scratch in C++ to understand the interna
 
 *Venus DB follows a layered architecture with clear separation between parsing, planning, execution, and storage layers.*
 
-## 🛠️ Technical Details
+## Technical Details
 
 ### Data Types Supported
 - `INT` - 32-bit integers
@@ -48,8 +48,10 @@ A simple SQL database system built from scratch in C++ to understand the interna
 - **Catalog Manager**: System tables for metadata
 - **Table Heap**: Table data management
 - **Executor Framework**: Iterator-based query execution
+- **Parser**: SQL command parsing
 
-## 🚀 Getting Started
+
+##   Getting Started
 
 ### Prerequisites
 - C++17 or later
@@ -70,6 +72,8 @@ make
 ./venus
 ```
 
+make sure this is performed in linux environment (Ubuntu is preferred)
+
 ### Example Usage
 ```sql
 venus> CREATE DATABASE mydb
@@ -83,82 +87,23 @@ venus> SHOW TABLES
 venus> EXIT
 ```
 
-## 📁 Project Structure
-```
-venus-db/
-├── src/
-│   ├── buffer/          # Buffer pool management
-│   ├── catalog/         # System catalog and metadata
-│   ├── common/          # Common utilities and types
-│   ├── database/        # Database manager
-│   ├── engine/          # Execution engine
-│   ├── executor/        # Query execution framework
-│   ├── parser/          # SQL parser
-│   ├── planner/         # Query planning
-│   ├── storage/         # Storage management
-│   └── table/           # Table heap management
-├── tests/               # Test files
-└── CMakeLists.txt
-```
+see notes.md for more
 
-## 🗺️ Roadmap
+## Contributing
 
-### Phase 1 (Current)
-- [x] Basic SQL parsing
-- [x] Table creation and insertion
-- [x] Simple SELECT queries
-- [x] System catalog
+This is an educational project, but contributions are welcome!
 
-### Phase 2 (Next)
-- [ ] WHERE clause filtering
-- [ ] B+ Tree indexes
-- [ ] JOIN operations
-- [ ] ORDER BY and LIMIT
-
-### Phase 3 (Future)
-- [ ] Aggregation functions (COUNT, SUM, etc.)
-- [ ] Transactions and ACID properties
-- [ ] Query optimization
-- [ ] Network interface
-
-## 🧪 Testing
-
-Run the test suite:
-```bash
-cd build
-make test
-# or run directly
-./test_phase_1
-```
-
-## 🤝 Contributing
-
-This is an educational project, but contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📚 Learning Resources
+## Learning Resources
 
 This project was inspired by:
 - [CMU Database Systems Course](https://15445.courses.cs.cmu.edu/)
 - [Arpit Bhayani](https://www.youtube.com/@ArpitBhayani)
 
-## ⚠️ Limitations
+## Limitations
 
-Current limitations (by design for simplicity):
-- No concurrent transactions
-- No authentication/authorization  
-- No views or stored procedures
-- Single primary key only
-- No foreign key constraints
-- Case-sensitive SQL
-- Fixed-length strings only
+- There are a lot, the main goal of this project is to learn databases and C++.
 
-
-## 🙋‍♂️ Author
+## Author
 
 **Karthikeya** - [@karthikeyaspace](https://github.com/karthikeyaspace)
 
