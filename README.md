@@ -1,4 +1,4 @@
-# Venus DB
+<img width="1125" height="295" alt="VENUS DB" src="https://github.com/user-attachments/assets/05ca3e5f-4ec5-47f0-94f1-d809a6895fce" />
 
 A simple SQL database system built from scratch in C++ to understand the internal workings of database systems. This project is inspired by Sir Arpit Bhayani and Prof. Andy Pavlo's educational content on database internals.
 
