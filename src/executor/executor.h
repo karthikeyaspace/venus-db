@@ -181,8 +181,6 @@ namespace executor {
 			context_ = new ExecutorContext(catalog, bpm);
 		}
 
-		void PrintResultSet(const ResultSet& result_set);
-
 	private:
 		ExecutorContext* context_;
 

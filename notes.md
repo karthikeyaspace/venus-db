@@ -183,6 +183,9 @@ For sql grammer - https://forcedotcom.github.io/phoenix/
 - Better constraints handling - unique, not null, check
 - Auto increment primary keys
 - Need better CHAR data type handling
+- further data validations for insert (primary key not negative, not repeated, checking input value types based on schema from catalog, char length etc)
+- Better error handling for parser and binder
+- Migrate REPL to Network manager, have better cli -> history, better everything
 
 - Add indexes - B+ Tree
 - Buffer pool manager - LRU-K, tracking dirty pages(pin/unpin)

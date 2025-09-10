@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "engine/execution_engine.h"
+#include "common/utils.h"
 
 using namespace venus::parser;
 using namespace venus::binder;
@@ -32,10 +33,10 @@ namespace engine {
 			auto bounded_ast = binder_.Bind(std::move(ast));
 
 			auto plan = planner_.Plan(std::move(bounded_ast));
-			planner_.PrintPlan(plan);
+			utils::PrintPlan(plan);
 
 			auto result_set = executor_.ExecutePlan(plan.get());
-			executor_.PrintResultSet(result_set);
+			utils::PrintResultSet(result_set);
 
 		} catch (const std::exception& e) {
 			std::cout << e.what() << std::endl;

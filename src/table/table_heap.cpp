@@ -89,6 +89,7 @@ namespace table {
 		tuple.SetRID(*rid);
 
 		bpm_->SetDirtyPage(page->GetPageId(), true);
+		bpm_->FlushPage(page->GetPageId());
 
 		return true;
 	}

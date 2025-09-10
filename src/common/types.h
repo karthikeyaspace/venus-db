@@ -132,6 +132,8 @@ enum class TokenType : uint8_t {
 
 	LITERAL, // string or number values
 
+	TAG,
+
 	// delimiters
 	COMMA,
 	SEMICOLON,
@@ -163,6 +165,8 @@ enum class ASTNodeType : uint8_t {
 	INSERT_MANY,
 	UPDATE,
 	DELETE,
+
+	TAG,
 
 	TABLE_REF, // planets
 	COLUMN_REF, // planets.id

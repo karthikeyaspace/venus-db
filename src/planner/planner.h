@@ -115,8 +115,6 @@ namespace planner {
 		const std::vector<std::unique_ptr<PlanNode>>& GetChildren() const {
 			return children_;
 		}
-
-		virtual void Print(int depth = 0) const = 0;
 	};
 
 	class SeqScanPlanNode : public PlanNode {
@@ -126,12 +124,6 @@ namespace planner {
 		explicit SeqScanPlanNode(TableRef* table_ref)
 		    : PlanNode(PlanNodeType::SEQ_SCAN)
 		    , table_ref_(table_ref) { }
-
-		void Print(int depth = 0) const override {
-			for (int i = 0; i < depth; i++)
-				std::cout << "  ";
-			std::cout << "SeqScan(table=" << table_ref_->table_name << ", id=" << table_ref_->table_id << ")\n";
-		}
 	};
 
 	class ProjectionPlanNode : public PlanNode {
@@ -141,21 +133,6 @@ namespace planner {
 		ProjectionPlanNode(const std::vector<ColumnRef>& column_refs)
 		    : PlanNode(PlanNodeType::PROJECTION)
 		    , column_refs_(column_refs) { }
-
-		void Print(int depth = 0) const override {
-			for (int i = 0; i < depth; i++)
-				std::cout << "  ";
-			std::cout << "Projection(columns=[";
-			for (size_t i = 0; i < column_refs_.size(); i++) {
-				std::cout << column_refs_[i].GetName();
-				if (i < column_refs_.size() - 1)
-					std::cout << ", ";
-			}
-			std::cout << "])\n";
-			for (const auto& child : children_) {
-				child->Print(depth + 1);
-			}
-		}
 	};
 
 	class InsertPlanNode : public PlanNode {
@@ -170,18 +147,6 @@ namespace planner {
 		    , table_ref(table_ref)
 		    , target_cols(target_cols)
 		    , values(values) { }
-
-		void Print(int depth = 0) const override {
-			for (int i = 0; i < depth; i++)
-				std::cout << "  ";
-			std::cout << "Insert(table=" << table_ref->table_name << ", values=[";
-			for (size_t i = 0; i < values.size(); i++) {
-				std::cout << values[i].value.c_str();
-				if (i < values.size() - 1)
-					std::cout << ", ";
-			}
-			std::cout << "])\n";
-		}
 	};
 
 	class CreateTablePlanNode : public PlanNode {
@@ -193,18 +158,6 @@ namespace planner {
 		    : PlanNode(PlanNodeType::CREATE_TABLE)
 		    , table_name_(table_name)
 		    , schema_(schema) { }
-
-		void Print(int depth = 0) const override {
-			for (int i = 0; i < depth; i++)
-				std::cout << "  ";
-			std::cout << "CreateTable(table=" << table_name_ << ", columns=[";
-			for (size_t i = 0; i < schema_.GetColumnCount(); i++) {
-				std::cout << schema_.GetColumn(i).GetName();
-				if (i < schema_.GetColumnCount() - 1)
-					std::cout << ", ";
-			}
-			std::cout << "])\n";
-		}
 	};
 
 	class DatabaseOpPlanNode : public PlanNode {
@@ -215,17 +168,6 @@ namespace planner {
 		    : PlanNode(type)
 		    , database_name_(database_name) { }
 
-		void Print(int depth = 0) const override {
-			for (int i = 0; i < depth; i++)
-				std::cout << "  ";
-			std::cout << GetOperation() << "(";
-			if (!database_name_.empty()) {
-				std::cout << "database=" << database_name_;
-			}
-			std::cout << ")\n";
-		}
-
-	private:
 		std::string GetOperation() const {
 			switch (type_) {
 			case PlanNodeType::CREATE_DATABASE:
@@ -246,12 +188,6 @@ namespace planner {
 	public:
 		ShowTablesPlanNode()
 		    : PlanNode(PlanNodeType::SHOW_TABLES) { }
-
-		void Print(int depth = 0) const override {
-			for (int i = 0; i < depth; i++)
-				std::cout << "  ";
-			std::cout << "ShowTables()\n";
-		}
 	};
 
 	class DropTablePlanNode : public PlanNode {
@@ -261,12 +197,6 @@ namespace planner {
 		DropTablePlanNode(const std::string& table_name)
 		    : PlanNode(PlanNodeType::DROP_TABLE)
 		    , table_name_(table_name) { }
-
-		void Print(int depth = 0) const override {
-			for (int i = 0; i < depth; i++)
-				std::cout << "  ";
-			std::cout << "DropTable(table=" << table_name_ << ")\n";
-		}
 	};
 
 	class Planner {
@@ -275,12 +205,6 @@ namespace planner {
 		~Planner() = default;
 
 		std::unique_ptr<PlanNode> Plan(std::unique_ptr<BoundASTNode> bound_ast);
-
-		void PrintPlan(const std::unique_ptr<PlanNode>& plan) {
-			if (plan) {
-				plan->Print();
-			}
-		}
 	};
 
 } // namespace planner

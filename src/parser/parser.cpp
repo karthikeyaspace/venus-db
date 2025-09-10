@@ -116,20 +116,48 @@ namespace parser {
 				i++;
 				continue;
 			}
-			if (c == '-') {
-				result.emplace_back(TokenType::MINUS, "-");
-				i++;
-				continue;
-			}
 			if (c == '/') {
 				result.emplace_back(TokenType::DIVIDE, "/");
 				i++;
 				continue;
 			}
-			if (c == '.') {
-				result.emplace_back(TokenType::DOT, ".");
-				i++;
+			if (c == '.' && i + 1 < query.length() && isDigit(query[i + 1])) {
+				size_t start = i++;
+				while (i < query.length() && isDigit(query[i]))
+					i++;
+				std::string value = "0" + query.substr(start, i - start); // prepend 0
+				result.emplace_back(TokenType::LITERAL, value);
 				continue;
+			}
+
+			if (c == '-') {
+				if (i + 1 < query.length() && isDigit(query[i + 1])) {
+					// Negative integer literal
+					size_t start = i++;
+					while (i < query.length() && isDigit(query[i]))
+						i++;
+					if (i < query.length() && query[i] == '.') {
+						i++;
+						while (i < query.length() && isDigit(query[i]))
+							i++;
+					}
+					std::string value = query.substr(start, i - start);
+					result.emplace_back(TokenType::LITERAL, value);
+					continue;
+				} else if (i + 1 < query.length() && query[i + 1] == '.') {
+					// Case: -.5
+					size_t start = i;
+					i += 2; // skip "-."
+					while (i < query.length() && isDigit(query[i]))
+						i++;
+					std::string value = "-" + query.substr(start + 1, i - (start + 1));
+					result.emplace_back(TokenType::LITERAL, value);
+					continue;
+				} else {
+					result.emplace_back(TokenType::MINUS, "-");
+					i++;
+					continue;
+				}
 			}
 
 			// String literals (in single quotes - char)
