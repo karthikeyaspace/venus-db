@@ -1,7 +1,7 @@
 // /src/executor/operators.h
 
 /**
- *  Volcano Model has 3 methods - Open, Next, Close
+ * Volcano Model has 3 methods - Open, Next, Close
  * Open() - propagate downwards, each executor opens its child executor
  * Next() - Each executors pulls tuples from its child, and produces them as output
  * Close() - propagate upwards, each executor closes its child executor

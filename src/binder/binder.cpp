@@ -84,7 +84,7 @@ namespace binder {
 
 			TableRef* bound_table = catalog_->GetTableRef(table_name);
 			if (bound_table != nullptr) {
-				throw std::runtime_error("Binder error: Table '" + table_name + "' already not exist");
+				throw std::runtime_error("Binder error: Table '" + table_name + "' already exists");
 			}
 
 			auto bound_create_table = std::make_unique<BoundCreateTableNode>(table_name);
@@ -110,11 +110,11 @@ namespace binder {
 					bool is_primary = (parts.size() > 2 && parts[2] == "PK");
 
 					ColumnType col_type;
-					if (col_type_str == "int") {
+					if (col_type_str == "int" || col_type_str == "INT") {
 						col_type = ColumnType::INT;
-					} else if (col_type_str == "float") {
+					} else if (col_type_str == "float" || col_type_str == "FLOAT") {
 						col_type = ColumnType::FLOAT;
-					} else if (col_type_str == "char") {
+					} else if (col_type_str == "char" || col_type_str == "CHAR") {
 						col_type = ColumnType::CHAR;
 					} else {
 						throw std::runtime_error("Binder error: Unsupported column type: " + col_type_str);

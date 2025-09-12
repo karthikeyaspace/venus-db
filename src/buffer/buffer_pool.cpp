@@ -84,22 +84,35 @@ namespace buffer {
 
 		Page* page = it->second;
 		if (page->IsDirty()) {
-			disk_manager_->WritePage(page_id, page->GetData());
-			page->SetDirty(false); // Reset dirty flag after flushing
+			try {
+				disk_manager_->WritePage(page_id, page->GetData());
+				page->SetDirty(false);
+			} catch (const std::exception& e) {
+				LOG("BPM: Failed to flush page " + std::to_string(page_id) + ": " + e.what());
+				return false;
+			}
 		}
 		return true;
 	}
 
 	bool BufferPoolManager::FlushAllPages() {
+		LOG("BPM: Starting flush of all pages (" + std::to_string(pages_.size()) + " pages)");
+
 		for (auto& pair : pages_) {
 			page_id_t page_id = pair.first;
 			Page* page = pair.second;
 
 			if (page->IsDirty()) {
-				disk_manager_->WritePage(page_id, page->GetData());
-				page->SetDirty(false);
+				try {
+					disk_manager_->WritePage(page_id, page->GetData());
+					page->SetDirty(false);
+				} catch (const std::exception& e) {
+					LOG("BPM: Failed to flush page " + std::to_string(page_id) + ": " + e.what());
+					return false;
+				}
 			}
 		}
+
 		return true;
 	}
 
@@ -177,8 +190,8 @@ namespace buffer {
 				disk_manager_->WritePage(page->GetPageId(), page->GetData());
 			}
 
-			// LOG("BPM destructor: Deallocating page: " + std::to_string(page->GetPageId()));
-			
+			LOG("BPM destructor: Deallocating page: " + std::to_string(page->GetPageId()));
+
 			delete[] page->GetData();
 			delete page;
 		}

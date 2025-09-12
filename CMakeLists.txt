@@ -9,8 +9,9 @@ set(PROJECT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 include_directories(
     ${PROJECT_SOURCE_DIR}
 )
-    
-file(GLOB_RECURSE SOURCES 
+
+# core
+file(GLOB_RECURSE CORE_SOURCES 
     "${PROJECT_SOURCE_DIR}/binder/*.cpp"
     "${PROJECT_SOURCE_DIR}/buffer/*.cpp" 
     "${PROJECT_SOURCE_DIR}/catalog/*.cpp"
@@ -22,11 +23,17 @@ file(GLOB_RECURSE SOURCES
     "${PROJECT_SOURCE_DIR}/planner/*.cpp"
     "${PROJECT_SOURCE_DIR}/storage/*.cpp"
     "${PROJECT_SOURCE_DIR}/table/*.cpp"
-    "${PROJECT_SOURCE_DIR}/main.cpp"
 )
 
-add_executable(venus ${SOURCES})
+add_library(venus_core STATIC ${CORE_SOURCES})
+
+add_executable(venus "${PROJECT_SOURCE_DIR}/main.cpp")
+target_link_libraries(venus venus_core)
+
+add_executable(venus_test "tests/load_insert_test.cpp")
+target_link_libraries(venus_test venus_core)
 
 if (MINGW)
     target_link_libraries(venus PRIVATE -static-libgcc -static-libstdc++ -lpthread)
+    target_link_libraries(venus_test PRIVATE -static-libgcc -static-libstdc++ -lpthread)
 endif()
