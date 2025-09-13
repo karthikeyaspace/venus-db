@@ -29,9 +29,9 @@
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/config.h"
+#include "executor/executor.h"
 #include "parser/parser.h"
 #include "planner/planner.h"
-#include "executor/executor.h"
 #include "storage/tuple.h"
 #include "table/table_heap.h"
 
@@ -62,8 +62,7 @@ namespace engine {
 			stop_db_callback_ = std::move(cb);
 		}
 
-		bool Execute(const std::string& query);
-		void StartRepl();
+		executor::ResultSet Execute(const std::string& query);
 
 	private:
 		buffer::BufferPoolManager* bpm_ = nullptr;

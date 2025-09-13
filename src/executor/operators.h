@@ -25,6 +25,14 @@ namespace executor {
 			if (is_open_)
 				return;
 
+			if (!plan_->table_ref_) {
+				throw std::runtime_error("SeqScanExecutor::Open - Table reference is null");
+			}
+
+			if (!plan_->table_ref_->GetSchema()) {
+				throw std::runtime_error("SeqScanExecutor::Open - Table schema is null");
+			}
+
 			table_heap_ = new table::TableHeap(
 			    context_->bpm_,
 			    plan_->table_ref_->GetSchema(),
@@ -199,7 +207,7 @@ namespace executor {
 			try {
 				context_->catalog_manager_->CreateTable(plan_->table_name_, &plan_->schema_);
 				out->SetResponse("Table " + plan_->table_name_ + " created successfully.", OperatorOutput::OutputType::MESSAGE, true);
-				return true;
+				return false; // Only one message needed
 			} catch (const std::exception& e) {
 				throw std::runtime_error("CreateTableExecutor::Next - Failed to create table: " + std::string(e.what()));
 			}

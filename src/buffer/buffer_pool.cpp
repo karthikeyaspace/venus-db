@@ -96,7 +96,7 @@ namespace buffer {
 	}
 
 	bool BufferPoolManager::FlushAllPages() {
-		LOG("BPM: Starting flush of all pages (" + std::to_string(pages_.size()) + " pages)");
+		// LOG("BPM: Starting flush of all pages (" + std::to_string(pages_.size()) + " pages)");
 
 		for (auto& pair : pages_) {
 			page_id_t page_id = pair.first;
@@ -190,7 +190,7 @@ namespace buffer {
 				disk_manager_->WritePage(page->GetPageId(), page->GetData());
 			}
 
-			LOG("BPM destructor: Deallocating page: " + std::to_string(page->GetPageId()));
+			// LOG("BPM destructor: Deallocating page: " + std::to_string(page->GetPageId()));
 
 			delete[] page->GetData();
 			delete page;

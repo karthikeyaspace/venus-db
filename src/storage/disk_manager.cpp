@@ -72,7 +72,7 @@ namespace storage {
 			file_size_ = offset + PAGE_SIZE;
 		}
 
-		LOG("Disk Manager: WritePage - Page ID: " + std::to_string(page_id) + ", Offset: " + std::to_string(offset) + ", Size: " + std::to_string(PAGE_SIZE) + ", File Size: " + std::to_string(file_size_));
+		// LOG("Disk Manager: WritePage - Page ID: " + std::to_string(page_id) + ", Offset: " + std::to_string(offset) + ", Size: " + std::to_string(PAGE_SIZE) + ", File Size: " + std::to_string(file_size_));
 
 		db_io_.flush(); // force policy
 	}

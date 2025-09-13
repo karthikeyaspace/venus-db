@@ -1,24 +1,21 @@
 // /src/database/database_manager.cpp
 
 #include "database/database_manager.h"
-#include "buffer/buffer_pool.h"
-#include "catalog/catalog.h"
-#include "common/config.h"
-#include "engine/execution_engine.h"
-#include "storage/disk_manager.h"
 
 using namespace venus::database;
 using namespace venus::storage;
 using namespace venus::buffer;
 using namespace venus::catalog;
 using namespace venus::engine;
+using namespace venus::network;
 
 DatabaseManager::DatabaseManager()
     : db_path_("")
     , is_open_(false)
     , disk_manager_(nullptr)
     , bpm_(nullptr)
-    , catalog_(nullptr) {
+    , catalog_(nullptr)
+    , network_(nullptr) {
 	InitializeExecutor();
 }
 
@@ -30,6 +27,8 @@ DatabaseManager::~DatabaseManager() {
 
 void DatabaseManager::InitializeExecutor() {
 	executor_ = new ExecutionEngine();
+	network_ = new NetworkManager();
+
 	executor_->InitializeCallback(
 	    [this](const std::string& db_name) {
 		    this->Initialize(db_name);
@@ -40,7 +39,12 @@ void DatabaseManager::InitializeExecutor() {
 		    if (is_open_) {
 			    this->Close();
 		    }
+		    network_->Stop();
 	    });
+
+	network_->SetExecuteCallback([this](const std::string& q) -> executor::ResultSet {
+		return executor_->Execute(q);
+	});
 }
 
 // Initialize() and InitializeExecutor() are cyclic
@@ -86,7 +90,7 @@ void DatabaseManager::Initialize(const std::string& db_name) {
 }
 
 void DatabaseManager::Start() {
-	executor_->StartRepl();
+	network_->Start();
 }
 
 void DatabaseManager::Cleanup() {

@@ -179,7 +179,7 @@ For sql grammer - https://forcedotcom.github.io/phoenix/
 
 
 ## Roadmap
-- more queries - where, limit, order by, joins
+- more queries - bulk insert, where, limit, order by, joins
 - Better constraints handling - unique, not null, check
 - Auto increment primary keys
 - Need better CHAR data type handling

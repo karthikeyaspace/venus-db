@@ -23,7 +23,12 @@
 
 #pragma once
 
+#include "buffer/buffer_pool.h"
+#include "catalog/catalog.h"
 #include "common/config.h"
+#include "engine/execution_engine.h"
+#include "network/network.h"
+#include "storage/disk_manager.h"
 
 #include <filesystem>
 #include <iostream>
@@ -73,6 +78,7 @@ namespace database {
 		storage::DiskManager* disk_manager_;
 		buffer::BufferPoolManager* bpm_;
 		catalog::CatalogManager* catalog_;
+		network::NetworkManager* network_;
 		engine::ExecutionEngine* executor_;
 
 		void Initialize(const std::string& db_path);

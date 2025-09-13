@@ -23,18 +23,18 @@ int main() {
 			throw std::runtime_error("ExecutionEngine is not initialized");
 		}
 
-		bool result = engine->Execute("CREATE DATABASE test");
-		if (!result) {
+		executor::ResultSet result = engine->Execute("CREATE DATABASE test");
+		if (!result.success_) {
 			throw std::runtime_error("Failed to create database test");
 		}
 
 		result = engine->Execute("USE test");
-		if (!result) {
+		if (!result.success_) {
 			throw std::runtime_error("Failed to use database");
 		}
 
 		result = engine->Execute("CREATE TABLE test_table (id INT, name CHAR, score FLOAT)");
-		if (!result) {
+		if (!result.success_) {
 			throw std::runtime_error("Failed to create table");
 		}
 
@@ -57,7 +57,7 @@ int main() {
 			std::string insert_query = "INSERT INTO test_table VALUES (" + std::to_string(i) + ", '" + name + "', " + std::to_string(score) + ")";
 
 			result = engine->Execute(insert_query);
-			if (result) {
+			if (result.success_) {
 				successful_inserts++;
 			}
 		}
@@ -67,7 +67,7 @@ int main() {
 
 		auto select_start_time = std::chrono::high_resolution_clock::now();
 		result = engine->Execute("SELECT * FROM test_table");
-		if (!result) {
+		if (!result.success_) {
 			throw std::runtime_error("Failed to execute select");
 		}
 
@@ -75,10 +75,10 @@ int main() {
 		auto select_duration = std::chrono::duration_cast<std::chrono::milliseconds>(select_end_time - select_start_time);
 
 		result = engine->Execute("SHOW TABLES");
-		if (!result) {
+		if (!result.success_) {
 			std::cerr << "Failed to show tables!" << std::endl;
 		}
- 
+
 		std::cout << "\n=== Test Summary ===" << std::endl;
 		std::cout << "Records attempted: " << NUM_INSERTS << std::endl;
 		std::cout << "Records successful: " << successful_inserts << std::endl;

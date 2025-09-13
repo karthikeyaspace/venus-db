@@ -162,7 +162,7 @@ namespace catalog {
 						throw std::runtime_error("Catalog error: Failed to delete column metadata from master_columns.");
 					}
 				}
-				
+
 				bpm_->FlushPage(MASTER_TABLES_PAGE_ID);
 				bpm_->FlushPage(MASTER_COLUMNS_PAGE_ID);
 

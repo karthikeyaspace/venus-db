@@ -26,7 +26,8 @@
         "*": true,
         "plaintext": false,
         "markdown": true,
-        "scminput": false
+        "scminput": false,
+        "cpp": true
     },
     "window.confirmSaveUntitledWorkspace": false,
     "editor.cursorBlinking": "smooth",

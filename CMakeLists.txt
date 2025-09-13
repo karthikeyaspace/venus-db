@@ -19,6 +19,7 @@ file(GLOB_RECURSE CORE_SOURCES
     "${PROJECT_SOURCE_DIR}/database/*.cpp"
     "${PROJECT_SOURCE_DIR}/engine/*.cpp"
     "${PROJECT_SOURCE_DIR}/executor/*.cpp"
+    "${PROJECT_SOURCE_DIR}/network/*.cpp"
     "${PROJECT_SOURCE_DIR}/parser/*.cpp"
     "${PROJECT_SOURCE_DIR}/planner/*.cpp"
     "${PROJECT_SOURCE_DIR}/storage/*.cpp"
