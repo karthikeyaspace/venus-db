@@ -149,6 +149,20 @@ namespace planner {
 		    , values(values) { }
 	};
 
+	class BulkInsertPlanNode : public PlanNode {
+	public:
+		TableRef* table_ref;
+		std::vector<ColumnRef> target_cols;
+		std::vector<std::vector<ConstantType>> value_sets;
+
+		BulkInsertPlanNode(TableRef* table_ref, const std::vector<ColumnRef>& target_cols,
+		    const std::vector<std::vector<ConstantType>>& value_sets)
+		    : PlanNode(PlanNodeType::INSERT_BULK)
+		    , table_ref(table_ref)
+		    , target_cols(target_cols)
+		    , value_sets(value_sets) { }
+	};
+
 	class CreateTablePlanNode : public PlanNode {
 	public:
 		std::string table_name_;

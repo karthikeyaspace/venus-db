@@ -45,6 +45,8 @@ namespace parser {
 				return "SELECT";
 			case ASTNodeType::INSERT:
 				return "INSERT";
+			case ASTNodeType::INSERT_BULK:
+				return "INSERT_BULK";
 			case ASTNodeType::TABLE_REF:
 				return "TABLE_REF";
 			case ASTNodeType::COLUMN_REF:
@@ -59,6 +61,10 @@ namespace parser {
 				return "CONDITION";
 			case ASTNodeType::WHERE_CLAUSE:
 				return "WHERE_CLAUSE";
+			case ASTNodeType::EXIT:
+				return "EXIT";
+			case ASTNodeType::EXEC:
+				return "EXEC";
 			default:
 				return "UNKNOWN_NODE";
 			}
@@ -120,18 +126,34 @@ namespace parser {
 	};
 
 	struct BoundInsertNode : BoundASTNode {
-		TableRef *table_ref;
+		TableRef* table_ref;
 		std::vector<ColumnRef> target_cols;
 		std::vector<ConstantType> values;
 
 		BoundInsertNode(
-		    TableRef *table,
+		    TableRef* table,
 		    std::vector<ColumnRef> cols,
 		    std::vector<ConstantType> vals)
 		    : table_ref(table)
 		    , target_cols(std::move(cols))
 		    , values(std::move(vals)) {
 			type = ASTNodeType::INSERT;
+		}
+	};
+
+	struct BoundBulkInsertNode : BoundASTNode {
+		TableRef* table_ref;
+		std::vector<ColumnRef> target_cols;
+		std::vector<std::vector<ConstantType>> values;
+
+		BoundBulkInsertNode(
+		    TableRef* table,
+		    std::vector<ColumnRef> cols,
+		    std::vector<std::vector<ConstantType>> vals)
+		    : table_ref(table)
+		    , target_cols(std::move(cols))
+		    , values(std::move(vals)) {
+			type = ASTNodeType::INSERT_BULK;
 		}
 	};
 

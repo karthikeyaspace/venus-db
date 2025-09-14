@@ -43,6 +43,18 @@ namespace planner {
 			    insert_node->values);
 		}
 
+		case ASTNodeType::INSERT_BULK: {
+			auto bulk_insert_node = static_cast<BoundBulkInsertNode*>(bound_ast.get());
+			if (!bulk_insert_node) {
+				throw std::runtime_error("Planner error: Null bulk insert node");
+			}
+
+			return std::make_unique<BulkInsertPlanNode>(
+			    bulk_insert_node->table_ref,
+			    bulk_insert_node->target_cols,
+			    bulk_insert_node->values);
+		}
+
 		case ASTNodeType::CREATE_TABLE: {
 			auto create_table_node = static_cast<BoundCreateTableNode*>(bound_ast.get());
 			if (!create_table_node) {

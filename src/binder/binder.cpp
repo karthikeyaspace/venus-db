@@ -206,6 +206,92 @@ namespace binder {
 			return std::make_unique<BoundInsertNode>(bound_table, std::move(target_cols), std::move(bound_values));
 		}
 
+		case ASTNodeType::INSERT_BULK: {
+			if (catalog_ == nullptr) {
+				throw std::runtime_error("Binder error: Database is not initialized");
+			}
+
+			const std::string& table_name = ast->value;
+
+			TableRef* bound_table = catalog_->GetTableRef(table_name);
+			if (bound_table == nullptr) {
+				throw std::runtime_error("Binder error: Table '" + table_name + "' does not exist");
+			}
+
+			std::vector<ColumnRef> target_cols;
+			for (size_t i = 0; i < bound_table->GetSchema()->GetColumnCount(); i++) {
+				const Column& column = bound_table->GetSchema()->GetColumn(i);
+				ColumnRef bound_col;
+				bound_col.col_id = static_cast<column_id_t>(i);
+				bound_col.column_entry_ = const_cast<Column*>(&column);
+				target_cols.push_back(bound_col);
+			}
+
+			std::vector<std::vector<ConstantType>> bound_value_sets;
+			
+			for (const auto& value_set_node : ast->children) {
+				if (value_set_node->type == ASTNodeType::CONST_VALUE) {
+					std::vector<ConstantType> bound_values;
+
+					for (const auto& value_node : value_set_node->children) {
+						if (value_node->type == ASTNodeType::CONST_VALUE) {
+							std::string value_str = value_node->value;
+
+							size_t value_index = bound_values.size();
+							if (value_index >= bound_table->GetSchema()->GetColumnCount()) {
+								throw std::runtime_error("Binder error: Too many values provided for bulk INSERT");
+							}
+
+							const Column& target_column = bound_table->GetSchema()->GetColumn(value_index);
+							ColumnType expected_type = target_column.GetType();
+
+							ConstantType bound_const;
+							bound_const.value = value_str;
+							bound_const.type = expected_type;
+
+							switch (expected_type) {
+							case ColumnType::INT: {
+								try {
+									std::stoi(value_str);
+								} catch (const std::exception&) {
+									throw std::runtime_error("Binder error: Invalid integer value '" + value_str + "' for column '" + target_column.GetName() + "'");
+								}
+								break;
+							}
+							case ColumnType::FLOAT: {
+								try {
+									std::stof(value_str);
+								} catch (const std::exception&) {
+									throw std::runtime_error("Binder error: Invalid float value '" + value_str + "' for column '" + target_column.GetName() + "'");
+								}
+								break;
+							}
+							case ColumnType::CHAR: {
+								break;
+							}
+							default:
+								throw std::runtime_error("Binder error: Unsupported column type for bulk INSERT");
+							}
+
+							bound_values.push_back(bound_const);
+						}
+					}
+
+					if (bound_values.size() != bound_table->GetSchema()->GetColumnCount()) {
+						throw std::runtime_error("Binder error: Number of values (" + std::to_string(bound_values.size()) + ") does not match number of columns (" + std::to_string(bound_table->GetSchema()->GetColumnCount()) + ") in bulk INSERT");
+					}
+
+					bound_value_sets.push_back(std::move(bound_values));
+				}
+			}
+
+			if (bound_value_sets.empty()) {
+				throw std::runtime_error("Binder error: No values provided for bulk INSERT");
+			}
+
+			return std::make_unique<BoundBulkInsertNode>(bound_table, std::move(target_cols), std::move(bound_value_sets));
+		}
+
 		case ASTNodeType::DROP_TABLE: {
 			if (catalog_ == nullptr) {
 				throw std::runtime_error("Binder error: Database is not initialized");

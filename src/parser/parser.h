@@ -64,6 +64,7 @@ namespace parser {
 
 		// Lexer
 		std::vector<Token> tokenize(const std::string& query);
+		
 		bool isAlpha(char c);
 		bool isDigit(char c);
 		bool isAlphaNumeric(char c);

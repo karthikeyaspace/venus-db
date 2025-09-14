@@ -91,6 +91,11 @@ namespace executor {
 			return std::make_unique<InsertExecutor>(context_, p);
 		}
 
+		case PlanNodeType::INSERT_BULK: {
+			auto p = static_cast<const planner::BulkInsertPlanNode*>(plan);
+			return std::make_unique<BulkInsertExecutor>(context_, p);
+		}
+
 		case PlanNodeType::CREATE_TABLE: {
 			auto p = static_cast<const planner::CreateTablePlanNode*>(plan);
 			return std::make_unique<CreateTableExecutor>(context_, p);

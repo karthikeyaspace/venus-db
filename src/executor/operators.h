@@ -195,6 +195,58 @@ namespace executor {
 		table::TableHeap* table_heap_;
 	};
 
+	class BulkInsertExecutor : public AbstractExecutor {
+	public:
+		BulkInsertExecutor(ExecutorContext* context, const planner::BulkInsertPlanNode* plan)
+		    : AbstractExecutor(context)
+		    , plan_(plan)
+		    , current_set_(0) { }
+
+		void Open() override {
+			table_heap_ = new table::TableHeap(
+			    context_->bpm_,
+			    plan_->table_ref->GetSchema(),
+			    plan_->table_ref->GetFirstPageId());
+			current_set_ = 0;
+		}
+
+		bool Next(OperatorOutput* out) override {
+			if (plan_ == nullptr || current_set_ >= plan_->value_sets.size()) {
+				if (current_set_ > 0) {
+					out->SetResponse("Inserted " + std::to_string(current_set_) + " rows into " + plan_->table_ref->table_name, OperatorOutput::OutputType::MESSAGE, true);
+					current_set_++;
+					return true;
+				}
+				return false;
+			}
+
+			const auto& current_values = plan_->value_sets[current_set_];
+			std::vector<std::string> insert_values;
+			for (const ConstantType& v : current_values) {
+				insert_values.push_back(v.value);
+			}
+
+			try {
+				if (table_heap_->InsertTuple(insert_values)) {
+					current_set_++;
+					return true; 
+				} else {
+					out->SetResponse("Failed to insert row " + std::to_string(current_set_ + 1) + " into " + plan_->table_ref->table_name, OperatorOutput::OutputType::MESSAGE, false);
+					return true;
+				}
+			} catch (const std::exception& e) {
+				throw std::runtime_error("BulkInsertExecutor::Next - Failed to insert tuple " + std::to_string(current_set_ + 1) + ": " + std::string(e.what()));
+			}
+		}
+
+		void Close() override { }
+
+	private:
+		const planner::BulkInsertPlanNode* plan_;
+		table::TableHeap* table_heap_;
+		size_t current_set_;
+	};
+
 	class CreateTableExecutor : public AbstractExecutor {
 	public:
 		CreateTableExecutor(ExecutorContext* context, const planner::CreateTablePlanNode* plan)
@@ -207,7 +259,7 @@ namespace executor {
 			try {
 				context_->catalog_manager_->CreateTable(plan_->table_name_, &plan_->schema_);
 				out->SetResponse("Table " + plan_->table_name_ + " created successfully.", OperatorOutput::OutputType::MESSAGE, true);
-				return false; // Only one message needed
+				return false; 
 			} catch (const std::exception& e) {
 				throw std::runtime_error("CreateTableExecutor::Next - Failed to create table: " + std::string(e.what()));
 			}

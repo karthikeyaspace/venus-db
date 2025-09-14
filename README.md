@@ -2,6 +2,8 @@
 
 A simple SQL database system built from scratch in C++ to understand the internal workings of database systems. This project is inspired by Sir Arpit Bhayani and Prof. Andy Pavlo's educational content on database internals.
 
+This is the Version v1.0 of Venus DB, more are yet to come.
+
 ## Project Goals
 
 - **Educational**: Learn database internals by building one from scratch

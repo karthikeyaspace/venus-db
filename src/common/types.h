@@ -162,7 +162,7 @@ enum class ASTNodeType : uint8_t {
 
 	SELECT,
 	INSERT,
-	INSERT_MANY,
+	INSERT_BULK,
 	UPDATE,
 	DELETE,
 
@@ -205,6 +205,7 @@ enum class PlanNodeType : uint8_t {
 
 	// DML
 	INSERT,
+	INSERT_BULK,
 	UPDATE,
 	DELETE,
 

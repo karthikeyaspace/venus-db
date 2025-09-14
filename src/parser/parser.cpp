@@ -421,21 +421,25 @@ namespace parser {
 
 		case TokenType::INSERT: {
 			// INSERT INTO <table_name> VALUES (val1, val2, val3, ...)
+			// INSERT INTO <table_name> VALUES (val1, val2), (val3, val4), ...
 			advance();
 			if (check(TokenType::INTO)) {
 				advance();
 				if (check(TokenType::IDENTIFIER)) {
 					std::string table_name = advance().value;
-					auto root = std::make_unique<ASTNode>(ASTNodeType::INSERT, table_name);
 
 					if (check(TokenType::VALUES)) {
 						advance();
+
+						std::vector<std::vector<std::string>> value_sets;
+
 						if (check(TokenType::LPAREN)) {
 							advance();
+							std::vector<std::string> current_values;
 							while (!isAtEnd() && !check(TokenType::RPAREN)) {
 								if (check(TokenType::LITERAL)) {
 									std::string value = advance().value;
-									root->add_child(std::make_shared<ASTNode>(ASTNodeType::CONST_VALUE, value));
+									current_values.push_back(value);
 								} else {
 									invalidToken("Expected a literal in VALUES");
 								}
@@ -443,15 +447,56 @@ namespace parser {
 									advance();
 								}
 							}
+
 							consume(TokenType::RPAREN, "Expected ')' after VALUES");
+							value_sets.push_back(current_values);
+
+							while (check(TokenType::COMMA)) {
+								advance();
+								if (check(TokenType::LPAREN)) {
+									advance();
+									std::vector<std::string> next_values;
+									while (!isAtEnd() && !check(TokenType::RPAREN)) {
+										if (check(TokenType::LITERAL)) {
+											std::string value = advance().value;
+											next_values.push_back(value);
+										} else {
+											invalidToken("Expected a literal in VALUES");
+										}
+										if (check(TokenType::COMMA)) {
+											advance();
+										}
+									}
+									consume(TokenType::RPAREN, "Expected ')' after VALUES");
+									value_sets.push_back(next_values);
+								} else {
+									invalidToken("Expected '(' after comma in bulk INSERT");
+								}
+							}
+
+							if (value_sets.size() == 1) {
+								auto root = std::make_unique<ASTNode>(ASTNodeType::INSERT, table_name);
+								for (const auto& value : value_sets[0]) {
+									root->add_child(std::make_shared<ASTNode>(ASTNodeType::CONST_VALUE, value));
+								}
+								return root;
+							} else {
+								auto root = std::make_unique<ASTNode>(ASTNodeType::INSERT_BULK, table_name);
+								for (const auto& value_set : value_sets) {
+									auto value_set_node = std::make_shared<ASTNode>(ASTNodeType::CONST_VALUE, "");
+									for (const auto& value : value_set) {
+										value_set_node->add_child(std::make_shared<ASTNode>(ASTNodeType::CONST_VALUE, value));
+									}
+									root->add_child(value_set_node);
+								}
+								return root;
+							}
 						} else {
 							invalidToken("Expected '(' after VALUES");
 						}
 					} else {
 						invalidToken("Expected VALUES after table name");
 					}
-
-					return root;
 				} else {
 					invalidToken("Expected table name after INTO");
 				}

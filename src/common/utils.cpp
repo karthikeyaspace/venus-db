@@ -45,6 +45,30 @@ namespace utils {
 			std::cout << "])\n";
 			break;
 		}
+		case PlanNodeType::INSERT_BULK: {
+			auto* bulk_insert_plan = static_cast<const planner::BulkInsertPlanNode*>(plan.get());
+			std::cout << "BulkInsert(table=" << bulk_insert_plan->table_ref->table_name 
+			          << ", value_sets=" << bulk_insert_plan->value_sets.size() << ", values=[";
+			for (size_t set_idx = 0; set_idx < bulk_insert_plan->value_sets.size() && set_idx < 3; set_idx++) {
+				std::cout << "(";
+				const auto& value_set = bulk_insert_plan->value_sets[set_idx];
+				for (size_t i = 0; i < value_set.size(); i++) {
+					std::cout << value_set[i].value.c_str();
+					if (i < value_set.size() - 1) {
+						std::cout << ", ";
+					}
+				}
+				std::cout << ")";
+				if (set_idx < bulk_insert_plan->value_sets.size() - 1 && set_idx < 2) {
+					std::cout << ", ";
+				}
+			}
+			if (bulk_insert_plan->value_sets.size() > 3) {
+				std::cout << ", ...";
+			}
+			std::cout << "])\n";
+			break;
+		}
 		case PlanNodeType::CREATE_TABLE: {
 			auto* create_table = static_cast<const planner::CreateTablePlanNode*>(plan.get());
 			std::cout << "CreateTable(table=" << create_table->table_name_ << ", columns=[";
