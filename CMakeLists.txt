@@ -31,10 +31,10 @@ add_library(venus_core STATIC ${CORE_SOURCES})
 add_executable(venus "${PROJECT_SOURCE_DIR}/main.cpp")
 target_link_libraries(venus venus_core)
 
-add_executable(venus_test "tests/load_insert_test.cpp")
-target_link_libraries(venus_test venus_core)
+add_executable(test "tests/load_insert_test.cpp")
+target_link_libraries(test venus_core)
 
 if (MINGW)
     target_link_libraries(venus PRIVATE -static-libgcc -static-libstdc++ -lpthread)
-    target_link_libraries(venus_test PRIVATE -static-libgcc -static-libstdc++ -lpthread)
+    target_link_libraries(test PRIVATE -static-libgcc -static-libstdc++ -lpthread)
 endif()
