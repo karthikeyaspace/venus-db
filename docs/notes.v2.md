@@ -15,8 +15,4 @@
 - Better deletion for Tuple/Page - reclaim functionality
 - Better error handling - custom exceptions
 
-- Network layer - HTTP connection, Req queue, Thread pool
-- EXEC file
-
-- WAL
 - Performance stats

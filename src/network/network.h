@@ -11,9 +11,9 @@
 
 #pragma once
 
+#include <functional>
 #include <iostream>
 #include <string>
-#include <functional>
 
 #include "executor/executor.h"
 
@@ -25,9 +25,10 @@ namespace network {
 		~NetworkManager() = default;
 
 		void Start();
-    void SetExecuteCallback(std::function<executor::ResultSet(const std::string&)> cb) {
-      execute = std::move(cb);
-    }
+		
+		void SetExecuteCallback(std::function<executor::ResultSet(const std::string&)> cb) {
+			execute = std::move(cb);
+		}
 
 		void Stop() {
 			open_ = false;
@@ -35,7 +36,7 @@ namespace network {
 
 	private:
 		void HandleInput(const std::string& input, std::string& accumulated_input);
-    std::function<executor::ResultSet(const std::string&)> execute;
+		std::function<executor::ResultSet(const std::string&)> execute;
 
 		bool open_ = true;
 	};

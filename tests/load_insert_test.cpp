@@ -1,13 +1,14 @@
 // tests/load_insert_test.cpp
-// High load insertion test on a database
-// Steps - Create a db, use a db, create a table, insert n random values to the table
 
-#include "database/database_manager.h"
-#include "engine/execution_engine.h"
+
 #include <chrono>
 #include <iostream>
 #include <random>
 #include <string>
+
+
+#include "database/database_manager.h"
+#include "engine/execution_engine.h"
 
 using namespace venus;
 using namespace venus::database;
