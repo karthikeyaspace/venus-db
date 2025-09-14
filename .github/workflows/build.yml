@@ -28,24 +28,24 @@ jobs:
           name: venus-linux
           path: releases/venus
 
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
+  # build-windows:
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Configure CMake (MinGW)
-        run: cmake -B build -S . -G "MinGW Makefiles"
+  #     - name: Configure CMake (MinGW)
+  #       run: cmake -B build -S . -G "MinGW Makefiles"
 
-      - name: Build
-        run: cmake --build build --config Release
+  #     - name: Build
+  #       run: cmake --build build --config Release
 
-      - name: Move Windows binary to releases folder
-        run: |
-          mkdir releases
-          copy build\venus.exe releases\venus.exe
+  #     - name: Move Windows binary to releases folder
+  #       run: |
+  #         mkdir releases
+  #         copy build\venus.exe releases\venus.exe
 
-      - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: venus-windows
-          path: releases/venus.exe
+  #     - name: Upload Windows artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: venus-windows
+  #         path: releases/venus.exe
