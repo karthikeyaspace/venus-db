@@ -12,7 +12,9 @@ run: $(BUILD_DIR)/Makefile
 	@cd $(BUILD_DIR) && $(MAKE) -s venus
 	@./$(BUILD_DIR)/venus
 
-test: $(BUILD_DIR)/Makefile
+test:
+	@mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && cmake .. -DBUILD_TESTS=ON > /dev/null
 	@cd $(BUILD_DIR) && $(MAKE) -s test
 	@./$(BUILD_DIR)/test
 

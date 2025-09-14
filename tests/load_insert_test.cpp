@@ -45,20 +45,35 @@ int main() {
 		std::vector<std::string> names = { "Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace", "Henry" };
 		std::uniform_int_distribution<> name_dist(0, names.size() - 1);
 
-		const int NUM_INSERTS = 500;
+		const int NUM_INSERTS = 10000;
+		const int BATCHES = 1000;
+		const int BATCH_SIZE = NUM_INSERTS / BATCHES;
+		
+		if (NUM_INSERTS % BATCHES != 0) {
+			throw std::runtime_error("NUM_INSERTS must be evenly divisible by BATCHES");
+		}
+		
 		int successful_inserts = 0;
 
 		auto start_time = std::chrono::high_resolution_clock::now();
 
-		for (int i = 0; i < NUM_INSERTS; i++) {
-			std::string name = names[name_dist(gen)];
-			float score = score_dist(gen);
-
-			std::string insert_query = "INSERT INTO test_table VALUES (" + std::to_string(i) + ", '" + name + "', " + std::to_string(score) + ")";
+		for (int batch = 0; batch < BATCHES; batch++) {
+			std::string insert_query = "INSERT INTO test_table VALUES ";
+			
+			for (int i = 0; i < BATCH_SIZE; i++) {
+				int id = batch * BATCH_SIZE + i;
+				std::string name = names[name_dist(gen)];
+				float score = score_dist(gen);
+				
+				if (i > 0) {
+					insert_query += ", ";
+				}
+				insert_query += "(" + std::to_string(id) + ", '" + name + "', " + std::to_string(score) + ")";
+			}
 
 			result = engine->Execute(insert_query);
 			if (result.success_) {
-				successful_inserts++;
+				successful_inserts += BATCH_SIZE;
 			}
 		}
 
@@ -74,19 +89,15 @@ int main() {
 		auto select_end_time = std::chrono::high_resolution_clock::now();
 		auto select_duration = std::chrono::duration_cast<std::chrono::milliseconds>(select_end_time - select_start_time);
 
-		result = engine->Execute("SHOW TABLES");
-		if (!result.success_) {
-			std::cerr << "Failed to show tables!" << std::endl;
-		}
-
-		std::cout << "\n=== Test Summary ===" << std::endl;
+		std::cout << "\n=== Test Stats ===" << std::endl;
 		std::cout << "Records attempted: " << NUM_INSERTS << std::endl;
+		std::cout << "Batch size: " << BATCH_SIZE << std::endl;
+		std::cout << "Number of batches: " << BATCHES << std::endl;
 		std::cout << "Records successful: " << successful_inserts << std::endl;
 		std::cout << "Success rate: " << (double)successful_inserts / NUM_INSERTS * 100.0 << "%" << std::endl;
 		std::cout << "Time taken for insertion: " << duration.count() << " ms" << std::endl;
 		std::cout << "Time taken for selection (seq scan): " << select_duration.count() << " ms" << std::endl;
-		std::cout << "Average time per insert: " << (double)duration.count() / NUM_INSERTS << " ms" << std::endl;
-		std::cout << "Test completed!" << std::endl;
+		std::cout << "Average time per batch: " << (double)duration.count() / BATCHES << " ms" << std::endl;
 
 	} catch (const std::exception& e) {
 		std::cerr << "Test error: " << e.what() << std::endl;

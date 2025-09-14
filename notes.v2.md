@@ -1,6 +1,7 @@
 ## Venus DB v2 roadmap
 
 - Implement strict validations for insert, select (where, etc)..
+- Better test suits
 - more queries - bulk insert, where, limit, order by, joins
 - Better constraints handling - unique, not null, check
 - Auto increment primary keys

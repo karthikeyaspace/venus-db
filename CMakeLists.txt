@@ -6,9 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PROJECT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}
-)
+include_directories(${PROJECT_SOURCE_DIR})
 
 # core
 file(GLOB_RECURSE CORE_SOURCES 
@@ -31,10 +29,16 @@ add_library(venus_core STATIC ${CORE_SOURCES})
 add_executable(venus "${PROJECT_SOURCE_DIR}/main.cpp")
 target_link_libraries(venus venus_core)
 
-add_executable(test "tests/load_insert_test.cpp")
-target_link_libraries(test venus_core)
+option(BUILD_TESTS "Build test executable" OFF)
+
+if(BUILD_TESTS)
+    add_executable(test "tests/load_insert_test.cpp")
+    target_link_libraries(test venus_core)
+endif()
 
 if (MINGW)
     target_link_libraries(venus PRIVATE -static-libgcc -static-libstdc++ -lpthread)
-    target_link_libraries(test PRIVATE -static-libgcc -static-libstdc++ -lpthread)
+    if(BUILD_TESTS)
+        target_link_libraries(test PRIVATE -static-libgcc -static-libstdc++ -lpthread)
+    endif()
 endif()
