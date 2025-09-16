@@ -32,13 +32,17 @@ target_link_libraries(venus venus_core)
 option(BUILD_TESTS "Build test executable" OFF)
 
 if(BUILD_TESTS)
-    add_executable(test "tests/load_insert_test.cpp")
-    target_link_libraries(test venus_core)
+    include_directories("tests")
+    add_executable(test_suite 
+        "tests/main.cpp"
+        "tests/test_suite.cpp"
+    )
+    target_link_libraries(test_suite venus_core)    
 endif()
 
 if (MINGW)
     target_link_libraries(venus PRIVATE -static-libgcc -static-libstdc++ -lpthread)
     if(BUILD_TESTS)
-        target_link_libraries(test PRIVATE -static-libgcc -static-libstdc++ -lpthread)
+        target_link_libraries(test_suite PRIVATE -static-libgcc -static-libstdc++ -lpthread)
     endif()
 endif()

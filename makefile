@@ -15,8 +15,8 @@ run: $(BUILD_DIR)/Makefile
 test:
 	@mkdir -p $(BUILD_DIR)
 	@cd $(BUILD_DIR) && cmake .. -DBUILD_TESTS=ON > /dev/null
-	@cd $(BUILD_DIR) && $(MAKE) -s test
-	@./$(BUILD_DIR)/test
+	@cd $(BUILD_DIR) && $(MAKE) -s test_suite
+	@./$(BUILD_DIR)/test_suite
 
 clean:
 	@rm -rf $(BUILD_DIR)
