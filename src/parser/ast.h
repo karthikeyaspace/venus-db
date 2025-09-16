@@ -191,5 +191,16 @@ namespace parser {
 		}
 	};
 
+	struct BoundHelpNode : BoundASTNode {
+		BoundHelpNode() {
+			type = ASTNodeType::HELP;
+		}
+	};
+
+	struct BoundExitNode : BoundASTNode {
+		BoundExitNode() {
+			type = ASTNodeType::EXIT;
+		}
+	};
 } // namespace parser
 } // namespace venus

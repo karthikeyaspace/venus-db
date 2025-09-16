@@ -184,6 +184,7 @@ enum class ASTNodeType : uint8_t {
 	LIMIT_CLAUSE,
 	ASSIGNMENT,
 
+	HELP,
 	EXIT,
 	EXEC
 };

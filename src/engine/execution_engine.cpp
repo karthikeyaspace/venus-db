@@ -1,4 +1,4 @@
-// /src/executor/executor.cpp
+// /src/engine/execution_engine.cpp
 
 #include <iostream>
 #include <sstream>
@@ -26,6 +26,11 @@ namespace engine {
 
 			if (ast->type == ASTNodeType::EXIT) {
 				stop_db_callback_();
+				return executor::ResultSet::Success("");
+			}
+
+			if(ast->type == ASTNodeType::HELP) {
+				utils::PrintHelp();
 				return executor::ResultSet::Success("");
 			}
 

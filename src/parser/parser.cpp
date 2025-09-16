@@ -505,17 +505,35 @@ namespace parser {
 			}
 		}
 
+		case TokenType::HELP: {
+			advance();
+			if (check(TokenType::SEMICOLON)) {
+				advance();
+			}
+			if (!isAtEnd()) {
+				invalidToken("Unexpected token after HELP command");
+			}
+			return std::make_unique<ASTNode>(ASTNodeType::HELP);
+		}
+
 		case TokenType::EXIT: {
 			advance();
 			if (check(TokenType::SEMICOLON)) {
 				advance();
 			}
+			if (!isAtEnd()) {
+				invalidToken("Unexpected token after EXIT command");
+			}
 			return std::make_unique<ASTNode>(ASTNodeType::EXIT);
 		}
 
 		default: {
-			std::cout << "Not implemented: " << currentToken().value << std::endl;
-			return std::make_unique<ASTNode>(ASTNodeType::INVALID_NODE);
+			auto root = std::make_unique<ASTNode>(ASTNodeType::INVALID_NODE);
+			while (!isAtEnd()) {
+				root->add_child(std::make_shared<ASTNode>(ASTNodeType::INVALID_NODE, currentToken().value));
+				advance();
+			}
+			return std::move(root);
 		}
 		}
 	}

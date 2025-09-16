@@ -228,7 +228,7 @@ namespace binder {
 			}
 
 			std::vector<std::vector<ConstantType>> bound_value_sets;
-			
+
 			for (const auto& value_set_node : ast->children) {
 				if (value_set_node->type == ASTNodeType::CONST_VALUE) {
 					std::vector<ConstantType> bound_values;
@@ -314,6 +314,16 @@ namespace binder {
 
 			return std::make_unique<BoundShowTablesNode>();
 		}
+
+		case ASTNodeType::INVALID_NODE: {
+			std::string error_token = "";
+			if (!ast->children.empty() && ast->children[0]->type == ASTNodeType::TAG) {
+				error_token = ast->children[0]->value;
+			}
+			throw std::runtime_error("Binder error: Invalid or unrecognized command: " + error_token);
+		}
+
+		// EXIT node now is being taken care of by engine/execution_engine.cpp directly
 
 		default: {
 			throw std::runtime_error("Binder error: Unsupported AST node type: " + ASTNode::typeToString(ast->type));

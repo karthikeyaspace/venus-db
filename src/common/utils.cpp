@@ -47,7 +47,7 @@ namespace utils {
 		}
 		case PlanNodeType::INSERT_BULK: {
 			auto* bulk_insert_plan = static_cast<const planner::BulkInsertPlanNode*>(plan.get());
-			std::cout << "BulkInsert(table=" << bulk_insert_plan->table_ref->table_name 
+			std::cout << "BulkInsert(table=" << bulk_insert_plan->table_ref->table_name
 			          << ", value_sets=" << bulk_insert_plan->value_sets.size() << ", values=[";
 			for (size_t set_idx = 0; set_idx < bulk_insert_plan->value_sets.size() && set_idx < 3; set_idx++) {
 				std::cout << "(";
@@ -182,6 +182,37 @@ namespace utils {
 		} else {
 			std::cout << "Failed to execute query: " << rs.message_ << std::endl;
 		}
+	}
+
+	void PrintHelp() {
+		std::cout << "\n\n  CREATE DATABASE <name>\n";
+		std::cout << "  DROP DATABASE <name>\n";
+		std::cout << "  USE <database>\n";
+		std::cout << "  SHOW DATABASES\n\n";
+		
+		std::cout << "  CREATE TABLE <name> (\n";
+		std::cout << "    <col> <type> [PRIMARY KEY],\n";
+		std::cout << "    <col> <type>,\n";
+		std::cout << "    ...\n";
+		std::cout << "  )\n";
+		std::cout << "  DROP TABLE <name>\n";
+		std::cout << "  SHOW TABLES\n\n";
+		
+		std::cout << "  INSERT INTO <table> VALUES (<val1>, <val2>, ...);\n";
+		std::cout << "  INSERT INTO <table> VALUES  \n";
+		std::cout << "    (<val1>, <val2>, ...),\n";
+		std::cout << "    (<val3>, <val4>, ...),\n";
+		std::cout << "    ...;\n";
+		std::cout << "  SELECT * FROM <table>     \n";
+		std::cout << "  SELECT <col1>, <col2> FROM <table> \n\n";
+		
+		std::cout << "  EXAMPLE:\n";
+		std::cout << "  CREATE DATABASE my_db;\n";
+		std::cout << "  USE my_db;\n";
+		std::cout << "  CREATE TABLE users (id INT, name CHAR, score FLOAT);\n";
+		std::cout << "  INSERT INTO users VALUES (1, 'Alice', 95.5);\n";
+		std::cout << "  INSERT INTO users VALUES (2, 'Bob', 87.2), (3, 'Charlie', 92.1);\n";
+		std::cout << "  SELECT * FROM users;\n\n";		
 	}
 
 } // namespace utils

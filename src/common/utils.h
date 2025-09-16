@@ -13,6 +13,7 @@ namespace utils {
 
 	void PrintPlan(const std::unique_ptr<planner::PlanNode>& plan, int depth = 0);
 	void PrintResultSet(const executor::ResultSet& rs);
+	void PrintHelp();
 
 } // namespace utils
 } // namespace venus

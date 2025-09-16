@@ -1,4 +1,6 @@
-/**
+// /src/executor/executor.h
+
+/*
  * Executor Framework for Venus DB - Simplified Architecture
  *
  * The Executor is responsible for taking a fully constructed query Plan
