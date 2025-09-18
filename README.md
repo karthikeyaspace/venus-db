@@ -71,7 +71,10 @@ venus> SHOW TABLES;
 venus> EXIT;
 ```
 
-see docs/notes.v1.md for more
+## Version Roadmaps
+- [v1](/docs/notes.v1.md) - present version
+- [v2](/docs/notes.v2.md)
+- [v3](/docs/notes.v3.md)
 
 ## Contributing
 

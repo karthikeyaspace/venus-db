@@ -175,3 +175,12 @@ For sql grammer - https://forcedotcom.github.io/phoenix/
 6. HELP
    EXIT
    EXEC <file_name>
+
+
+
+## v1 progress
+- Implemented base architecture - execution framework, catalog, table heap, buffer pool manager, disk manager
+- Support basic sql commands
+   - DDL - CREATE DATABASE, USE DATABASE, DROP DATABASE, SHOW DATABASES, CREATE TABLE, DROP TABLE, SHOW TABLES
+   - DML - INSERT INTO, SELECT
+- Impl REPL framework using network manager - Need more functionality(v2)
